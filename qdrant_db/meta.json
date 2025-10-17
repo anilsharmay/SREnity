@@ -1,1 +1,3 @@
-{"collections": {"dc8ce367feda40339e3ff198b1e4fba7": {"vectors": {"size": 1536, "distance": "Cosine", "hnsw_config": null, "quantization_config": null, "on_disk": null, "datatype": null, "multivector_config": null}, "shard_number": null, "sharding_method": null, "replication_factor": null, "write_consistency_factor": null, "on_disk_payload": null, "hnsw_config": null, "wal_config": null, "optimizers_config": null, "init_from": null, "quantization_config": null, "sparse_vectors": null, "strict_mode_config": null}}, "aliases": {}}
+version https://git-lfs.github.com/spec/v1
+oid sha256:e3f70f945802b020248f384a10661ed5cd1aefd0a366ea815b0cd8c71d9943c0
+size 534
