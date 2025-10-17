@@ -1,0 +1,29 @@
+# Large data files (can be recreated by running notebook)
+data/runbooks/gitlab_runbooks.json
+
+# Environment files
+.env
+
+# System files
+.DS_Store
+**/.DS_Store
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE files
+.vscode/
+.idea/
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Virtual environment
+.venv/
+venv/
+
+# Logs
+*.log

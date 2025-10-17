@@ -1,0 +1,96 @@
+# SREnity - Enterprise SRE Agent Project
+
+## Project Context
+This is an End-to-End Agentic AI Prototype for AI Engineering Bootcamp Certification Challenge. The project focuses on accelerating Production Incident resolution using RAG-based runbook retrieval.
+
+## Core Requirements
+- Build and test pieces in Jupyter notebooks with Python libs/folders imported
+- Reuse components in local hosting frontend app
+- Target: 100 points across 7 certification tasks
+- Focus: Runbook RAG component for incident resolution
+
+## Certification Scoring Rubric
+**Task 1: Problem & Audience (10 points)**
+- 2 points: 1-sentence problem description
+- 8 points: 1-2 paragraphs on why it's a problem for specific users
+
+**Task 2: Solution Design (15 points)**
+- 6 points: Proposed solution
+- 7 points: Tech stack choices with justifications
+- 2 points: Agent usage and reasoning
+
+**Task 3: Data Sources (10 points)**
+- 5 points: Data sources and external APIs description
+- 5 points: Chunking strategy and rationale
+
+**Task 4: End-to-End Prototype (15 points)**
+- 15 points: Working prototype deployed to local host with frontend
+
+**Task 5: Golden Test Dataset (15 points)**
+- 10 points: RAGAS evaluation with metrics table
+- 5 points: Performance conclusions
+
+**Task 6: Advanced Retrieval (5 points)**
+- 5 points: Implement advanced retrieval methods
+
+**Task 7: Performance Assessment (10 points)**
+- 5 points: Compare performance with RAGAS metrics
+- 5 points: Future improvement plans
+
+**Final Submission (20 points)**
+- 10 points: 5-minute demo video
+- 10 points: Written document addressing all deliverables
+
+## Data Sources
+- Primary: GitLab Runbooks (runbooks.gitlab.com)
+- Content: Real production SRE procedures (Cloud SQL, Elastic, CI/CD, etc.)
+- Format: Markdown runbooks with detailed troubleshooting procedures
+- Quality: Rich, comprehensive content (verified: Cloud SQL, Elastic examples)
+- Scope: Synthetic incident scenarios mapped to runbook sections
+
+## Technical Stack
+- LLM: OpenAI (GPT-4) - Confirmed suitable for technical SRE content
+- Embedding: OpenAI text-embedding-3-large
+- Vector DB: Qdrant
+- Orchestration: LangChain
+- Frontend: Streamlit (TBD)
+- Evaluation: RAGAS framework
+
+## Project Structure
+- Modular Python packages for notebook imports
+- Single comprehensive notebook for development and testing
+- Reusable components for local hosting app
+- Focus on production-grade implementation
+- RAGAS evaluation in notebook only (not in deployed app)
+
+## Key Constraints
+- No code changes until user confirms vision
+- Build incrementally with testing
+- Maintain certification scoring rubric focus
+- Demonstrate advanced retrieval techniques
+- Create synthetic data using RAGAS SDG with incident templates
+
+## Incident Format (TBD)
+- Structured JSON with incident details
+- Symptoms, metadata, affected services
+- Mapping to specific runbook sections
+- Synthetic scenarios for testing
+
+## Success Criteria
+- 5-minute demo of incident → runbook retrieval
+- RAGAS evaluation metrics (faithfulness, relevancy, precision, recall)
+- Advanced retrieval implementation
+- Production-ready architecture
+
+## Development Approach
+- Question, challenge, and clarify requirements
+- Avoid sycophantic responses
+- Focus on practical implementation
+- Maintain enterprise SRE context
+
+## Code Quality Standards
+- Use professional language and structure
+- Implement appropriate logging (not excessive)
+- Use emojis very sparingly
+- Follow enterprise-grade development practices
+- Maintain clean, readable code structure
