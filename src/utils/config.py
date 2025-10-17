@@ -13,8 +13,9 @@ class Config:
     
     # OpenAI Configuration
     openai_api_key: str
-    openai_model: str = "gpt-4o-mini"
+    openai_model: str = "gpt-4.1-nano"  # RAG generation (cheaper, larger context)
     openai_embedding_model: str = "text-embedding-3-small"
+    evaluation_llm: str = "gpt-4o-mini"  # Judge (slightly better performance)
     
     # Qdrant Configuration (for vector storage)
     qdrant_url: str = "../qdrant_db"
@@ -85,6 +86,15 @@ class ModelFactory:
             temperature=self.config.temperature,
             max_tokens=self.config.max_tokens,
             streaming=True
+        )
+    
+    def get_judge_llm(self):
+        """Get LLM model instance for evaluation (judge)"""
+        return ChatOpenAI(
+            model="gpt-4o-mini",  # Cost-effective model for evaluation
+            openai_api_key=self.config.openai_api_key,
+            temperature=0.1,  # Low temperature for consistent evaluation
+            max_tokens=16000  # Very high token limit for detailed evaluations
         )
 
 
