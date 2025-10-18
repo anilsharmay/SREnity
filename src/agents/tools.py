@@ -124,8 +124,8 @@ def search_web(query: str) -> str:
             search_depth="advanced"
         )
         
-        # Search with SRE context
-        search_query = f"SRE DevOps {query} troubleshooting production incident"
+        # Search with the raw query
+        search_query = query
         results = tavily_tool.invoke(search_query)
         
         # Format results

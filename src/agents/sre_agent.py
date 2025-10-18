@@ -39,6 +39,24 @@ class SREAgent:
         """
         messages = state["messages"]
         
+        # Check if we're processing a tool result (after tool execution)
+        if len(messages) >= 2:
+            last_message = messages[-1]
+            prev_message = messages[-2]
+            
+            # If previous message was a tool call and current is a tool result
+            if (hasattr(prev_message, 'tool_calls') and 
+                hasattr(last_message, 'type') and 
+                last_message.type == 'tool'):
+                
+                # Extract tool name and result
+                tool_name = prev_message.tool_calls[0]['name']
+                tool_result = last_message.content
+                
+                # For search_runbooks, return raw output without LLM processing
+                if tool_name == 'search_runbooks':
+                    return {"messages": [AIMessage(content=tool_result)]}
+        
         # Add system message if this is the first message
         if len(messages) == 1 and isinstance(messages[0], HumanMessage):
             system_message = """
@@ -51,19 +69,18 @@ Your expertise includes:
 - DevOps best practices
 
 TOOL USAGE RULES:
-1. ALWAYS start with search_runbooks for SRE procedures and troubleshooting
-2. Use search_web ONLY when:
-   - Runbooks don't have the specific information needed
-   - You need latest updates, CVEs, or version-specific issues
-   - The query involves recent changes or breaking updates
-3. REFUSE non-SRE queries politely but firmly
+1. Start with search_runbooks for SRE procedures and troubleshooting
+2. Use search_web for latest updates, CVEs, or version-specific issues that runbooks don't cover
+3. Answer ALL technology, infrastructure, and software engineering questions (including SRE, DevOps, system operations)
 
 GUARDRAILS:
-- If the query is clearly off-topic (weather, cooking, general knowledge, personal advice), respond:
-  "I'm specialized in SRE incident response and can only help with infrastructure troubleshooting, runbook procedures, and production issues. Please ask about system operations or technical problems."
+- ONLY refuse queries that are completely unrelated to technology, infrastructure, or software engineering
+- ALWAYS answer questions about: SRE concepts, DevOps, infrastructure, troubleshooting, system operations, technical methodologies
+- Examples of questions to ALWAYS answer: "What is SRE?", "SRE vs DevOps", "SRE best practices", "What is DevOps?", "Infrastructure concepts"
+- Only refuse: weather, cooking, personal advice, non-technical topics
 - Do NOT use tools for off-topic queries
 
-Always provide clear, actionable guidance based on the information you find.
+Always provide clear, actionable guidance.
 """
             messages = [AIMessage(content=system_message)] + messages
         
