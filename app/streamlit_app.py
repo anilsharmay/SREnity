@@ -100,6 +100,45 @@ st.markdown("""
     .stChatInput > div > div > input::placeholder {
         color: #6c757d;
     }
+    
+    /* Chat bubble styles */
+    .chat-container {
+        display: flex;
+        margin: 1rem 0;
+    }
+    .chat-bubble {
+        max-width: 70%;
+        padding: 0.75rem 1rem;
+        border-radius: 1rem;
+        word-wrap: break-word;
+        position: relative;
+    }
+    .user-bubble {
+        background-color: transparent;
+        color: white;
+        border: 1px solid #6c757d;
+        margin-left: auto;
+        border-bottom-right-radius: 0.25rem;
+    }
+    .agent-bubble {
+        background-color: transparent;
+        color: #212529;
+        border: none;
+        margin-right: auto;
+        padding: 0;
+    }
+    .chat-label {
+        font-size: 0.8rem;
+        font-weight: bold;
+        margin-bottom: 0.25rem;
+        color: #6c757d;
+    }
+    .user-label {
+        text-align: right;
+    }
+    .agent-label {
+        text-align: left;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -126,17 +165,25 @@ def initialize_agent():
     return True
 
 def display_message(message, is_user=False):
-    """Display a message in the chat"""
+    """Display a message in the chat with bubble styling for user only"""
     if is_user:
-        with st.container():
-            st.markdown("**👤 You:**")
-            with st.container():
-                st.markdown(message)
+        st.markdown(f"""
+        <div class="chat-container">
+            <div style="flex: 1; text-align: right;">
+                <div class="chat-label user-label">👤 You</div>
+                <div class="chat-bubble user-bubble">{message}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     else:
-        with st.container():
-            st.markdown("**🤖 SREnity:**")
-            with st.container():
-                st.markdown(message)
+        st.markdown(f"""
+        <div class="chat-container">
+            <div style="flex: 1; text-align: left;">
+                <div class="chat-label agent-label">🤖 SREnity</div>
+                <div>{message}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 def main():
     # Header
