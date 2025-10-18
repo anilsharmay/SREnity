@@ -23,19 +23,33 @@ def filter_by_service(documents, services=['redis']):
     return filtered
 
 
+# Global cache for the BM25 + Reranker chain
+_cached_chain = None
+
 def _get_bm25_reranker_chain():
-    """Get or create the BM25 + Reranker chain for runbook search"""
+    """Get or create the BM25 + Reranker chain for runbook search (with caching)"""
+    global _cached_chain
+    
+    # Return cached chain if it exists
+    if _cached_chain is not None:
+        return _cached_chain
+    
+    print("🔄 Initializing BM25 + Reranker chain (this may take a moment)...")
+    
     # Load configuration
     config = get_config()
     model_factory = get_model_factory()
     
     # Load documents
     documents = load_saved_documents()
+    print(f"📚 Loaded {len(documents)} documents")
     
-    # Filter to Redis services only
-    #documents = filter_by_service(documents, ['redis'])
+    # Filter to Redis services only for focused responses
+    documents = filter_by_service(documents, ['redis'])
+    print(f"🔍 Filtered to {len(documents)} Redis documents")
     
     # Preprocess HTML documents to markdown
+    print("🔄 Preprocessing documents...")
     processed_documents = preprocess_html_documents(documents)
     
     # Chunk documents with tiktoken
@@ -49,10 +63,16 @@ def _get_bm25_reranker_chain():
         )
         return text_splitter.split_documents(documents)
     
+    print("🔄 Chunking documents...")
     chunked_docs = chunk_documents_with_tiktoken(processed_documents, chunk_size=1000, chunk_overlap=200)
+    print(f"📄 Created {len(chunked_docs)} chunks")
     
     # Create BM25 + Reranker chain
-    return create_bm25_reranker_chain(chunked_docs, model_factory, bm25_k=12, rerank_k=5)
+    print("🔄 Creating BM25 + Reranker chain...")
+    _cached_chain = create_bm25_reranker_chain(chunked_docs, model_factory, bm25_k=12, rerank_k=5)
+    print("✅ BM25 + Reranker chain ready!")
+    
+    return _cached_chain
 
 
 @tool
