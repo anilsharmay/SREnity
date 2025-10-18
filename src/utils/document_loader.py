@@ -11,10 +11,22 @@ from markdownify import markdownify as md
 
 def load_saved_documents(filename: str = "gitlab_runbooks.json") -> List[Document]:
     """Load documents from saved JSON file"""
-    filepath = Path("../data/runbooks") / filename
+    # Try multiple possible paths to find the runbooks file
+    possible_paths = [
+        Path("../data/runbooks") / filename,  # From project root
+        Path("data/runbooks") / filename,     # From current directory
+        Path("../../data/runbooks") / filename,  # From app/ directory
+        Path("../SREnity/data/runbooks") / filename,  # Alternative path
+    ]
     
-    if not filepath.exists():
-        raise FileNotFoundError(f"Document file not found: {filepath}")
+    filepath = None
+    for path in possible_paths:
+        if path.exists():
+            filepath = path
+            break
+    
+    if filepath is None:
+        raise FileNotFoundError(f"Document file not found. Tried paths: {[str(p) for p in possible_paths]}")
     
     with open(filepath, 'r', encoding='utf-8') as f:
         docs_data = json.load(f)
@@ -112,7 +124,8 @@ def download_gitlab_runbooks() -> List[Document]:
 
 def save_documents(documents: List[Document], filename: str = "gitlab_runbooks.json") -> Path:
     """Save documents to file"""
-    data_dir = Path("../data/runbooks")
+    # Use the same path logic as load_saved_documents
+    data_dir = Path("data/runbooks")  # Use relative to current directory
     data_dir.mkdir(parents=True, exist_ok=True)
     
     docs_data = []
