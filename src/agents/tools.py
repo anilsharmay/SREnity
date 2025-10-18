@@ -13,6 +13,16 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 import tiktoken
 
 
+def filter_by_service(documents, services=['redis']):
+    """Filter documents by service type"""
+    filtered = []
+    for doc in documents:
+        source = doc.metadata.get('source', '').lower()
+        if any(service in source for service in services):
+            filtered.append(doc)
+    return filtered
+
+
 def _get_bm25_reranker_chain():
     """Get or create the BM25 + Reranker chain for runbook search"""
     # Load configuration
@@ -21,6 +31,9 @@ def _get_bm25_reranker_chain():
     
     # Load documents
     documents = load_saved_documents()
+    
+    # Filter to Redis services only (matching notebook logic)
+    documents = filter_by_service(documents, ['redis'])
     
     # Preprocess HTML documents to markdown
     processed_documents = preprocess_html_documents(documents)
