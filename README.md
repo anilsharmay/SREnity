@@ -20,7 +20,12 @@ An End-to-End Agentic AI Prototype for accelerating Production Incident resoluti
 - **Evaluation:** RAGAS framework (comprehensive RAG evaluation)
 - **Frontend:** Streamlit (rapid prototyping and demo)
 
-**Agent Usage:** The system uses an agentic approach where the RAG pipeline autonomously retrieves relevant documentation, processes context, and generates actionable responses without human intervention during incident response.
+**Agent Usage:** The system employs a LangGraph ReAct agent that autonomously:
+- Analyzes incident queries to determine information needs
+- Selects appropriate tools (runbook search vs web search) based on query context
+- Chains multiple tool calls when needed (e.g., retrieve procedure → get latest updates)
+- Refuses off-topic queries with clear guardrails
+- Provides step-by-step reasoning for troubleshooting decisions
 
 ## Data Sources
 
@@ -40,13 +45,16 @@ An End-to-End Agentic AI Prototype for accelerating Production Incident resoluti
 - Document ingestion and chunking pipeline
 - Vector embedding generation and storage
 - Dual retrieval systems (naive vector search + advanced BM25+reranker)
+- LangGraph ReAct agent with 2-tool system (runbook search + web search)
 - RAGAS evaluation framework
 - Performance comparison dashboard
 
 **Demo Capabilities:**
-- Real-time incident query processing
-- Contextual runbook retrieval
+- Real-time incident query processing with agentic reasoning
+- Intelligent tool selection (runbook vs web search)
+- Contextual runbook retrieval with fallback to web search
 - Step-by-step troubleshooting guidance
+- Guardrails preventing off-topic responses
 - Performance metrics visualization
 
 ## Golden Test Dataset
