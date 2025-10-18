@@ -32,8 +32,8 @@ def _get_bm25_reranker_chain():
     # Load documents
     documents = load_saved_documents()
     
-    # Filter to Redis services only (matching notebook logic)
-    documents = filter_by_service(documents, ['redis'])
+    # Filter to Redis services only
+    #documents = filter_by_service(documents, ['redis'])
     
     # Preprocess HTML documents to markdown
     processed_documents = preprocess_html_documents(documents)
