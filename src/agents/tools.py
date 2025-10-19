@@ -6,7 +6,7 @@ This module contains the tools used by the SRE agent for runbook search and web 
 
 from langchain_core.tools import tool
 from langchain_community.tools.tavily_search import TavilySearchResults
-from src.rag.advanced_retrieval import create_bm25_reranker_chain
+from src.rag.bm25_reranker_retriever import create_bm25_reranker_chain
 from src.utils.config import get_config, get_model_factory
 from src.utils.document_loader import load_saved_documents, preprocess_html_documents
 from langchain.text_splitter import RecursiveCharacterTextSplitter
