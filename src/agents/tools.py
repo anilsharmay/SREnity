@@ -69,7 +69,7 @@ def _get_bm25_reranker_chain():
     
     # Create BM25 + Reranker chain
     print("🔄 Creating BM25 + Reranker chain...")
-    _cached_chain = create_bm25_reranker_chain(chunked_docs, model_factory, bm25_k=12, rerank_k=5)
+    _cached_chain = create_bm25_reranker_chain(chunked_docs, model_factory, bm25_k=12, rerank_k=4)
     print("✅ BM25 + Reranker chain ready!")
     
     return _cached_chain
