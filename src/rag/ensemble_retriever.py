@@ -2,8 +2,9 @@
 Ensemble retrieval implementation - Combines existing chains
 For SREnity RAG Pipeline Evaluation
 """
-from langchain_core.runnables import RunnableLambda
-from src.utils.prompts import get_rag_prompt
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough
+from operator import itemgetter
+from src.utils.prompts import get_rag_prompt, get_ensemble_combination_prompt
 
 def create_ensemble_chain(naive_chain, bm25_reranker_chain, weights=[0.5, 0.5]):
     """
@@ -80,35 +81,8 @@ def create_ensemble_chain_with_llm_combination(naive_chain, bm25_reranker_chain,
         # Get LLM to combine the responses
         chat_model = model_factory.get_llm()
         
-        combination_prompt = ChatPromptTemplate.from_template("""
-You are an expert SRE helping to resolve production incidents. You have two different responses to the same question:
-
-**Question:** {question}
-
-**Response 1 (Vector Similarity):**
-{naive_response}
-
-**Response 2 (BM25 + Reranker):**
-{bm25_response}
-
-**Context from Vector Similarity:**
-{naive_contexts}
-
-**Context from BM25 + Reranker:**
-{bm25_contexts}
-
-Please provide the best possible answer by combining insights from both responses. 
-Prioritize accuracy and completeness. If one response is clearly better, use that as primary.
-If both have valuable information, synthesize them into a comprehensive answer.
-
-Provide:
-1. **Direct Answer** - Clear response to the question
-2. **Step-by-Step Instructions** - Detailed procedure
-3. **Key Commands** - Specific commands or configurations
-4. **Important Notes** - Warnings, prerequisites, or additional context
-
-Format your response clearly with headers and numbered steps.
-        """)
+        # Use centralized ensemble combination prompt
+        combination_prompt = get_ensemble_combination_prompt()
         
         # Combine contexts for the LLM
         all_contexts = naive_result.get('contexts', []) + bm25_result.get('contexts', [])
@@ -133,3 +107,76 @@ Format your response clearly with headers and numbered steps.
         }
     
     return RunnableLambda(ensemble_invoke_with_llm)
+
+def create_ensemble_retriever(vector_store, chunked_docs, model_factory, naive_k=3, bm25_k=12, rerank_k=4):
+    """
+    Create ensemble retriever that combines naive vector and BM25+reranker
+    
+    Args:
+        vector_store: Qdrant vector store
+        chunked_docs: List of chunked documents
+        model_factory: Model factory instance
+        naive_k: Number of docs for naive retriever
+        bm25_k: Number of docs for BM25 retriever
+        rerank_k: Number of docs after reranking
+    
+    Returns:
+        EnsembleRetriever instance
+    """
+    from langchain.retrievers import EnsembleRetriever
+    from src.rag.naive_retriever import create_naive_retriever
+    from src.rag.bm25_reranker_retriever import create_bm25_reranker_retriever
+    
+    # Create individual retrievers
+    naive_retriever = create_naive_retriever(vector_store, k=naive_k)
+    bm25_reranker_retriever = create_bm25_reranker_retriever(chunked_docs, bm25_k, rerank_k)
+    
+    # Create ensemble retriever
+    ensemble_retriever = EnsembleRetriever(
+        retrievers=[naive_retriever, bm25_reranker_retriever],
+        weights=[0.5, 0.5]  # Equal weights
+    )
+    
+    return ensemble_retriever
+
+def create_ensemble_retrieval_chain(ensemble_retriever, model_factory):
+    """
+    Create full RAG chain with ensemble retriever
+    
+    Args:
+        ensemble_retriever: EnsembleRetriever instance
+        model_factory: Model factory instance
+    
+    Returns:
+        Runnable chain for ensemble retrieval
+    """
+    from langchain_core.runnables import RunnablePassthrough
+    from operator import itemgetter
+    
+    # Get the RAG prompt (same as other retrievers)
+    rag_prompt = get_rag_prompt()
+    
+    # Get the chat model
+    chat_model = model_factory.get_llm()
+    
+    # Create the ensemble retrieval chain
+    def extract_content(message):
+        """Extract content from AIMessage"""
+        if hasattr(message, 'content'):
+            return message.content
+        return str(message)
+    
+    ensemble_chain = (
+        {"context": itemgetter("question") | ensemble_retriever, "question": itemgetter("question")}
+        | RunnablePassthrough.assign(
+            response=lambda x: chat_model.invoke(
+                rag_prompt.format(
+                    question=x["question"],
+                    context="\n\n".join([doc.page_content for doc in x["context"]])
+                )
+            ).content,
+            contexts=lambda x: [doc.page_content for doc in x["context"]]
+        )
+    )
+    
+    return ensemble_chain
