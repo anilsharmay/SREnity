@@ -16,6 +16,9 @@ import time
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+# Also add the current directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 # Load environment variables
 load_dotenv()
 

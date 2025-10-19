@@ -3,7 +3,8 @@ Advanced Retrieval Implementation - BM25 + Reranker
 For SREnity RAG Pipeline Evaluation
 """
 
-from langchain_community.retrievers import BM25Retriever, ContextualCompressionRetriever
+from langchain_community.retrievers import BM25Retriever
+from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors import CohereRerank
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import ChatPromptTemplate
