@@ -6,71 +6,42 @@ This module contains the tools used by the SRE agent for runbook search and web 
 
 from langchain_core.tools import tool
 from langchain_community.tools.tavily_search import TavilySearchResults
-from src.rag.bm25_reranker_retriever import create_bm25_reranker_chain
+from src.rag.ensemble_retriever import create_ensemble_retriever, create_ensemble_retrieval_chain
 from src.utils.config import get_config, get_model_factory
-from src.utils.document_loader import load_saved_documents, preprocess_html_documents
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-import tiktoken
+from src.utils.database_utils import create_database_components
 
 
-def filter_by_service(documents, services=['redis']):
-    """Filter documents by service type"""
-    filtered = []
-    for doc in documents:
-        source = doc.metadata.get('source', '').lower()
-        if any(service in source for service in services):
-            filtered.append(doc)
-    return filtered
-
-
-# Global cache for the BM25 + Reranker chain
+# Global cache for the Ensemble retriever chain
 _cached_chain = None
 
-def _get_bm25_reranker_chain():
-    """Get or create the BM25 + Reranker chain for runbook search (with caching)"""
+def initialize_tools_with_database(vector_store, chunked_docs):
+    """Initialize tools with pre-created database components"""
+    global _cached_chain
+    
+    print("🔄 Initializing tools with provided database...")
+    config = get_config()
+    model_factory = get_model_factory()
+    
+    ensemble_retriever = create_ensemble_retriever(
+        vector_store, chunked_docs, model_factory, 
+        naive_k=3, bm25_k=12, rerank_k=4
+    )
+    _cached_chain = create_ensemble_retrieval_chain(ensemble_retriever, model_factory)
+    print("✅ Tools initialized with database")
+
+def _get_ensemble_chain():
+    """Get or create the Ensemble retriever chain for runbook search (with caching)"""
     global _cached_chain
     
     # Return cached chain if it exists
     if _cached_chain is not None:
         return _cached_chain
     
-    print("🔄 Initializing BM25 + Reranker chain (this may take a moment)...")
+    print("🔄 Initializing ensemble chain (this may take a moment)...")
     
-    # Load configuration
-    config = get_config()
-    model_factory = get_model_factory()
-    
-    # Load documents
-    documents = load_saved_documents()
-    print(f"📚 Loaded {len(documents)} documents")
-    
-    # Filter to Redis services only for focused responses
-    documents = filter_by_service(documents, ['redis'])
-    print(f"🔍 Filtered to {len(documents)} Redis documents")
-    
-    # Preprocess HTML documents to markdown
-    print("🔄 Preprocessing documents...")
-    processed_documents = preprocess_html_documents(documents)
-    
-    # Chunk documents with tiktoken
-    def chunk_documents_with_tiktoken(documents, chunk_size=1000, chunk_overlap=200):
-        encoding = tiktoken.encoding_for_model(config.openai_model)
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-            length_function=lambda text: len(encoding.encode(text)),
-            separators=["\n\n", "\n", " ", ""]
-        )
-        return text_splitter.split_documents(documents)
-    
-    print("🔄 Chunking documents...")
-    chunked_docs = chunk_documents_with_tiktoken(processed_documents, chunk_size=1000, chunk_overlap=200)
-    print(f"📄 Created {len(chunked_docs)} chunks")
-    
-    # Create BM25 + Reranker chain
-    print("🔄 Creating BM25 + Reranker chain...")
-    _cached_chain = create_bm25_reranker_chain(chunked_docs, model_factory, bm25_k=12, rerank_k=4)
-    print("✅ BM25 + Reranker chain ready!")
+    # Create database components and initialize tools
+    vector_store, chunked_docs = create_database_components()
+    initialize_tools_with_database(vector_store, chunked_docs)
     
     return _cached_chain
 
@@ -93,8 +64,8 @@ def search_runbooks(query: str) -> str:
         Formatted response with runbook guidance
     """
     try:
-        bm25_reranker_chain = _get_bm25_reranker_chain()
-        result = bm25_reranker_chain.invoke({"question": query})
+        ensemble_chain = _get_ensemble_chain()
+        result = ensemble_chain.invoke({"question": query})
         return result["response"]
     except Exception as e:
         return f"Error searching runbooks: {str(e)}"
@@ -154,3 +125,6 @@ def search_web(query: str) -> str:
 
 # Export tools list
 TOOLS = [search_runbooks, search_web]
+
+# Export functions for external use
+__all__ = ['TOOLS', 'search_runbooks', 'search_web', 'initialize_tools_with_database', 'create_database_components']

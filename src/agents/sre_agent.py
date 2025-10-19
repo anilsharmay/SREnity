@@ -6,7 +6,7 @@ This module contains the main SRE agent using LangGraph with a 2-node ReAct patt
 
 from typing import TypedDict, Annotated, Sequence
 import operator
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from src.utils.config import get_model_factory
@@ -28,10 +28,23 @@ class SREAgent:
     def __init__(self):
         """Initialize the SRE agent"""
         self.model_factory = get_model_factory()
+        
+        # Initialize database components
+        from src.utils.database_utils import create_database_components
+        from src.agents.tools import initialize_tools_with_database
+        
+        print("🔄 Initializing SRE agent database components...")
+        self.vector_store, self.chunked_docs = create_database_components()
+        initialize_tools_with_database(self.vector_store, self.chunked_docs)
+        print("✅ Database components initialized")
+        
+        # Now create tools and LLM
+        from src.agents.tools import TOOLS
         self.llm = self.model_factory.get_llm()
         self.llm_with_tools = self.llm.bind_tools(TOOLS)
         self.tool_node = ToolNode(TOOLS)
         self.graph = self._build_graph()
+        print("✅ SRE agent ready!")
     
     def _assistant(self, state: GraphState):
         """
@@ -88,7 +101,7 @@ TOOL USAGE RULES:
 
 Always provide clear, actionable guidance for technical questions only.
 """
-            messages = [AIMessage(content=system_message)] + messages
+            messages = [SystemMessage(content=system_message)] + messages
         
         # Get response from LLM
         response = self.llm_with_tools.invoke(messages)
