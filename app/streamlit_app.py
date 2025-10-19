@@ -3,7 +3,7 @@ SREnity - Enterprise SRE Agent
 Streamlit Chat Interface
 
 A production-ready SRE incident response agent powered by LangGraph ReAct pattern
-with BM25 + Reranker retrieval and web search capabilities.
+with Ensemble Retriever (Naive + BM25 + Reranker) and web search capabilities.
 """
 
 import streamlit as st
@@ -12,15 +12,14 @@ from pathlib import Path
 from dotenv import load_dotenv
 import time
 
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+# Add project root to path - use absolute path to avoid working directory issues
+project_root = Path(__file__).resolve().parent.parent
+project_root_str = str(project_root)
+if project_root_str not in sys.path:
+    sys.path.insert(0, project_root_str)
 
-# Also add the current directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-# Load environment variables
-load_dotenv()
+# Load environment variables from project root
+load_dotenv(str(project_root / ".env"))
 
 # Import our agent
 from src.agents.sre_agent import SREAgent
@@ -199,7 +198,7 @@ def main():
         st.markdown("""
         **SREnity** is an enterprise SRE incident response agent that:
         
-        - 🔍 **Searches GitLab runbooks** using BM25 + Reranker
+        - 🔍 **Searches GitLab runbooks** using Ensemble Retriever (Naive + BM25 + Reranker)
         - 🌐 **Web search** for latest updates and CVEs
         - 🧠 **Agentic reasoning** with LangGraph ReAct pattern
         - 🛡️ **Guardrails** to stay focused on SRE topics
@@ -220,7 +219,7 @@ def main():
         
         st.header("📊 Capabilities")
         st.markdown("""
-        - **Runbook Search**: BM25 + Cohere Reranker
+        - **Runbook Search**: Ensemble Retriever (Naive + BM25 + Reranker)
         - **Web Search**: Tavily for latest info
         - **Coverage**: Redis-focused GitLab runbooks
         """)
@@ -273,7 +272,7 @@ def main():
     st.markdown("---")
     st.markdown("""
     <div style="text-align: center; color: #6c757d; font-size: 0.9rem;">
-        <strong>SREnity</strong> - Enterprise SRE Agent | Powered by LangGraph ReAct + BM25 + Reranker
+        <strong>SREnity</strong> - Enterprise SRE Agent | Powered by LangGraph ReAct + Ensemble Retriever
     </div>
     """, unsafe_allow_html=True)
 
