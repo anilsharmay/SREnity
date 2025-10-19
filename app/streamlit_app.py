@@ -158,6 +158,7 @@ def initialize_agent():
                 st.session_state.agent = SREAgent()
                 st.session_state.agent_initialized = True
                 st.success("✅ Agent initialized successfully! Ready for queries.")
+                st.rerun()  # Force sidebar to update
                 return True
             except Exception as e:
                 st.error(f"❌ Failed to initialize agent: {str(e)}")
@@ -218,8 +219,7 @@ def main():
         st.markdown("""
         - **Runbook Search**: BM25 + Cohere Reranker
         - **Web Search**: Tavily for latest info
-        - **Multi-service**: Redis, PostgreSQL, Elastic, etc.
-        - **Enterprise Scale**: Full GitLab runbook repository
+        - **Coverage**: Redis-focused GitLab runbooks
         """)
         
         # Clear chat button

@@ -136,9 +136,17 @@ def search_web(query: str) -> str:
                 f"**Content:** {result.get('content', 'No content available')}"
                 for result in results
             ])
-            return f"Recent web information:\n\n{formatted_results}"
+            return f"""
+**SOURCE NOTICE**: This information was not available in our current runbooks and was retrieved from recent web sources.
+
+{formatted_results}
+
+**IMPORTANT**: This information comes from external web sources, not from our internal runbooks.
+"""
         else:
-            return "No recent web information found for this query."
+            return """**SOURCE NOTICE**: This information was not available in our current runbooks. No recent web information found for this query.
+
+**IMPORTANT**: This information comes from external web sources, not from our internal runbooks."""
             
     except Exception as e:
         return f"Error searching web: {str(e)}"
