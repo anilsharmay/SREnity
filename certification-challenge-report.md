@@ -46,7 +46,7 @@ Production incidents demand immediate, accurate responses, but SREs currently fa
 
 ### Certification Challenge Scope: Redis-Focused Implementation
 
-**For this certification challenge, I demonstrate the SREnity approach using Redis-specific incident scenarios:**
+**For this certification challenge, I demonstrate the SREnity approach using Redis-specific scenarios:**
 
 **Typical Redis SRE Questions During Incidents**:
 - "How do I restart Redis service without losing data?"
@@ -57,6 +57,8 @@ Production incidents demand immediate, accurate responses, but SREs currently fa
 - "What's the procedure for Redis cluster scaling during peak traffic?"
 
 **Note**: This Redis-focused scope demonstrates the core SREnity methodology and can be extended to cover all infrastructure components in the full implementation.
+
+![SREnity_cert_scope](SREnity_cert_scope.png)
 
 ---
 
