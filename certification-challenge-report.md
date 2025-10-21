@@ -99,7 +99,7 @@ The Agent detects if the query can be answered using the runbook corpus. If yes,
 ## 3. Data Sources
 
 ### Primary Data Source: GitLab SRE Runbooks simulating a large Enterprise documentation
-- **Source**: [runbooks.gitlab.com](https://runbooks.gitlab.com]
+- **Source**: [runbooks.gitlab.com](https://runbooks.gitlab.com)
 - **Full Corpus**: Production SRE procedures for Cloud SQL, Elastic, CI/CD, Redis, and infrastructure
 - **Format**: Markdown runbooks with detailed troubleshooting procedures including code blocks
 - **Quality**: Rich, comprehensive content with real production scenarios
