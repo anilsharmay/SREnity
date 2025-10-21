@@ -1,111 +1,145 @@
-# SREnity - Enterprise SRE Agent Prototype
+# SREnity - Enterprise SRE Agent
 
-An End-to-End Agentic AI Prototype for accelerating Production Incident resolution using RAG-based runbook retrieval.
+![SREnity](SREnity.png)
 
-## Problem & Audience
+**SREnity** is an End-to-End Agentic AI Prototype designed to accelerate Production Incident resolution using RAG-based runbook retrieval. The broader vision encompasses a comprehensive SRE assistant covering all infrastructure components (Redis, Elasticsearch, Cloud SQL, CI/CD, etc.) with advanced retrieval techniques and agentic reasoning.
 
-**Problem:** SREs spend excessive time searching through documentation during production incidents, leading to delayed resolution and increased downtime.
+**For this Certification Challenge, the implementation focuses on Redis-specific query response to demonstrate core capabilities and evaluation methodology.** This focused implementation showcases the technical architecture, advanced retrieval methods, and RAGAS evaluation framework that can be extended to the full SREnity vision.
+
+## 🎯 Problem & Audience
+
+**Problem:** SREs waste critical time searching through runbooks during production incidents, leading to extended MTTR and increased business impact.
 
 **Target Users:** Site Reliability Engineers, DevOps teams, and incident response personnel who need rapid access to troubleshooting procedures during critical production issues.
 
-## Solution Design
+**Why It's Critical:** In high-pressure incident scenarios, every minute counts. Traditional documentation search is slow, fragmented, and often misses critical context needed for effective resolution.
 
-**Proposed Solution:** A RAG-based system that retrieves relevant runbook procedures from GitLab's comprehensive SRE documentation, providing contextual, step-by-step guidance for incident resolution.
+## 🏗️ Solution Design
 
-**Tech Stack:**
-- **LLM:** OpenAI GPT-4o-mini (cost-effective, suitable for technical content)
-- **Embeddings:** OpenAI text-embedding-3-small (optimized for technical documentation)
-- **Vector DB:** Qdrant (high-performance vector storage)
-- **Orchestration:** LangChain (modular RAG pipeline)
-- **Evaluation:** RAGAS framework (comprehensive RAG evaluation)
-- **Frontend:** Streamlit (rapid prototyping and demo)
+**Proposed Solution:** An intelligent RAG-based system that retrieves relevant runbook procedures from GitLab's comprehensive SRE documentation, providing contextual, step-by-step guidance for incident resolution.
 
-**Agent Usage:** The system employs a LangGraph ReAct agent that autonomously:
+**Technology Stack with Justifications:**
+- **LLM:** OpenAI GPT-4o-mini - Cost-effective and suitable for technical content processing
+- **Embeddings:** OpenAI text-embedding-3-large - Optimized for technical documentation understanding
+- **Vector Database:** Qdrant - High-performance vector storage with local deployment
+- **Retrieval:** Ensemble Retriever (Naive Vector + BM25 + Reranker) - Combines semantic understanding with keyword precision
+- **Orchestration:** LangChain - Modular RAG pipeline with comprehensive tool integration
+- **Agent Framework:** LangGraph - ReAct pattern for autonomous reasoning and tool selection
+- **Frontend:** Streamlit - Rapid prototyping with interactive chat interface
+- **Evaluation:** RAGAS framework - Comprehensive RAG evaluation across 6 metrics
+
+**Agentic Reasoning:** The system employs a LangGraph ReAct agent that autonomously:
 - Analyzes incident queries to determine information needs
 - Selects appropriate tools (runbook search vs web search) based on query context
 - Chains multiple tool calls when needed (e.g., retrieve procedure → get latest updates)
 - Refuses off-topic queries with clear guardrails
 - Provides step-by-step reasoning for troubleshooting decisions
 
-## Data Sources
+## 📊 Data Sources
 
 **Primary Data Source:** GitLab Runbooks (runbooks.gitlab.com)
-- **Content:** Real production SRE procedures covering Cloud SQL, Elastic, CI/CD, Redis, and infrastructure management
+- **Full Corpus:** Real production SRE procedures covering Cloud SQL, Elastic, CI/CD, Redis, and infrastructure management
+- **Certification Challenge Data Scope:** Redis-focused subset (33 documents, 685 chunks) for focused evaluation
 - **Format:** Markdown runbooks with detailed troubleshooting procedures, commands, and configurations
 - **Quality:** Comprehensive, production-tested content with rich technical detail
 
+**External APIs and Use Cases:**
+- **Tavily Search:** Latest updates, CVEs, version-specific issues not covered in runbooks
+- **Cohere Rerank:** Advanced relevance scoring for retrieved documents
+- **OpenAI API:** LLM reasoning, embeddings, and response generation
+
 **Chunking Strategy:** 
-- **Method:** Recursive character splitting with 1000-character chunks and 200-character overlap
+- **Method:** Recursive character splitting with tiktoken encoding (1000-character chunks, 200-character overlap)
 - **Rationale:** Preserves complete procedures while ensuring manageable context windows for LLM processing
+- **Separators:** Hierarchical splitting by paragraphs, lines, and words for optimal content preservation
 
-## End-to-End Prototype
+## 🚀 End-to-End Prototype
 
-**Deployment:** Local Streamlit application accessible via localhost
+**Deployment:** Local Streamlit application accessible via localhost:8509
 **Architecture:** 
-- Document ingestion and chunking pipeline
-- Vector embedding generation and storage
-- Dual retrieval systems (naive vector search + advanced BM25+reranker)
-- LangGraph ReAct agent with 2-tool system (runbook search + web search)
-- RAGAS evaluation framework
-- Performance comparison dashboard
+- Document ingestion and chunking pipeline with HTML-to-Markdown preprocessing
+- Vector embedding generation and Qdrant storage
+- Ensemble retrieval system (Naive Vector + BM25 + Cohere Reranker)
+- LangGraph ReAct agent with 2-tool system (search_runbooks + search_web)
+- RAGAS evaluation framework with comprehensive metrics
+- Interactive chat interface with real-time processing
 
 **Demo Capabilities:**
-- Real-time incident query processing with agentic reasoning
-- Intelligent tool selection (runbook vs web search)
-- Contextual runbook retrieval with fallback to web search
-- Step-by-step troubleshooting guidance
-- Guardrails preventing off-topic responses
-- Performance metrics visualization
+- Real-time query processing with agentic reasoning
+- Intelligent tool selection (runbook vs web search) based on query context
+- Contextual runbook retrieval with fallback to web search for latest updates
+- Step-by-step troubleshooting guidance with command examples
+- Guardrails preventing off-topic responses with clear error messages
+- Performance metrics visualization and comparison
 
-## Golden Test Dataset
+**Repository Structure:**
+- `notebooks/`: RAG evaluation and agent demonstration notebooks
+- `src/agents/`: SREAgent class with LangGraph implementation
+- `src/rag/`: Retrieval implementations (naive, BM25+reranker, ensemble)
+- `src/utils/`: Configuration, document loading, and evaluation utilities
+- `app/`: Streamlit deployment with custom styling and caching
+- `data/`: Processed runbooks and evaluation datasets
 
-**Evaluation Framework:** RAGAS with 6 core metrics
-**Test Dataset:** 8 synthetic incident scenarios generated from GitLab runbooks
-**Evaluation Results:**
+## 📈 Performance Highlights
 
-| Metric | Naive Vector | BM25 + Reranker | Improvement |
-|--------|-------------|-----------------|-------------|
-| Faithfulness | 0.524 | 0.735 | +40.3% |
-| Answer Relevancy | 0.838 | 0.817 | -2.5% |
-| Context Precision | 0.750 | 0.500 | -33.3% |
-| Context Recall | 0.708 | 0.667 | -5.8% |
-| Answer Correctness | 0.537 | 0.443 | -17.5% |
-| Context Entity Recall | 0.025 | 0.218 | +772.0% |
+**Advanced Retrieval:** Ensemble approach combining semantic and keyword-based retrieval
+**Agentic Reasoning:** LangGraph ReAct pattern for intelligent tool selection
+**Production Ready:** Comprehensive evaluation with RAGAS framework
+**Scalable Architecture:** Extensible to full GitLab runbook corpus
 
-**Performance Conclusions:** BM25+Reranker shows significant improvements in factual accuracy (+40.3%) and entity coverage (+772%), but trade-offs in overall precision (-33.3%) and correctness (-17.5%). The naive vector approach provides more balanced performance for production use.
+## 🔍 Key Features
 
-## Advanced Retrieval
+**Intelligent Retrieval:** 
+- Semantic understanding with vector embeddings
+- Keyword precision with BM25 + Cohere reranking
+- Ensemble combination for optimal performance
 
-**Implementation:** BM25 + Cohere Reranker pipeline
-- **BM25 Retrieval:** Keyword-based retrieval of 12 candidate documents
-- **Cohere Reranker:** Cross-attention reranking to select top 5 most relevant documents
-- **Rationale:** Combines broad recall (BM25) with intelligent relevance scoring (reranker)
+**Agentic Reasoning:**
+- LangGraph ReAct pattern for autonomous tool selection
+- Context-aware query processing
+- Multi-step reasoning for complex incidents
 
-**Technical Details:**
-- BM25 parameters: k=12 for broad candidate retrieval
-- Cohere model: rerank-v3.5 for relevance scoring
-- Final output: Top 5 documents after reranking
+**Production Ready:**
+- Comprehensive RAGAS evaluation
+- Redis-focused implementation with extensibility
+- Real-time processing with caching
 
-## Performance Assessment
+## 🎯 Quick Start
 
-**RAGAS Metrics Comparison:**
-- **Faithfulness:** BM25+Reranker significantly outperforms (+40.3%) due to better factual grounding
-- **Context Entity Recall:** Dramatic improvement (+772%) in finding specific commands and tools
-- **Context Precision:** Notable decline (-33.3%) indicating more noise in retrieved documents
-- **Answer Correctness:** Overall performance decrease (-17.5%) due to precision-recall trade-off
+**Prerequisites:**
+```bash
+# Clone repository
+git clone https://github.com/anilsharmay/SREnity.git
+cd SREnity
 
-**Future Improvements:**
-1. **Hybrid Retrieval:** Combine vector search with BM25+reranker for optimal precision-recall balance
-2. **Query Expansion:** Implement multi-query retrieval to improve recall
-3. **Context Filtering:** Add relevance filtering to reduce noise in retrieved documents
-4. **Fine-tuning:** Optimize reranker parameters for SRE-specific content
-5. **Evaluation Expansion:** Increase test dataset size and add domain-specific evaluation metrics
+# Install dependencies
+pip install -e .
 
-## Final Submission
+# Set up environment variables
+cp env.example .env
+# Edit .env with your API keys
+```
 
-**Demo Video:** 5-minute demonstration of incident → runbook retrieval workflow
-**Documentation:** This README addresses all certification deliverables with comprehensive technical details and performance analysis.
+**Run the Agent:**
+```bash
+# Start Streamlit app
+cd app
+streamlit run streamlit_app.py --server.port 8509
+```
+
+**Demo Questions:**
+- "How do I restart Redis service without losing data?"
+- "Redis memory usage is high, what should I check?"
+- "How to configure Redis persistence for production?"
+
+## 📚 Documentation
+
+**Certification Report:** See `certification-challenge-report.md` for detailed evaluation results and certification deliverables.
+
+**Development Notebooks:** 
+- `notebooks/rag_evaluation.ipynb` - RAG pipeline development and evaluation
+- `notebooks/agent_demo.ipynb` - Agent demonstration and testing
 
 ---
 
-*Built for AI Engineering Bootcamp Certification Challenge - Task 6: Advanced Retrieval Implementation*
+*SREnity - Enterprise SRE Agent for Production Incident Response*
