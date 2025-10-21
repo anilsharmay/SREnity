@@ -8,6 +8,8 @@ SREnity is an End-to-End Agentic AI Prototype designed to accelerate Production 
 
 **For this Certification Challenge, I have focused the scope on Redis-specific query response to demonstrate the core capabilities and evaluation methodology.** This focused implementation showcases the technical architecture, advanced retrieval methods, and RAGAS evaluation framework that can be extended to the full SREnity vision.
 
+**Demo Video**: [5-minute Loom demonstration](https://www.loom.com/share/4c5dbc800c3a4d1d8f2d2e2bc630bd88)
+
 ---
 
 ## Table of Contents
@@ -111,6 +113,10 @@ The Agent detects if the query can be answered using the runbook corpus. If yes,
 - **Format**: Markdown runbooks with detailed troubleshooting procedures including code blocks
 - **Quality**: Rich, comprehensive content with real production scenarios
 - **Full Scope**: 33+ runbook documents covering critical infrastructure components
+
+### Additional Data Requirements for Future State
+
+**Enterprise Architecture Context**: For full production deployment, the application will require enterprise architecture data (system dependencies, infrastructure topology, monitoring integration) to provide optimal Root Cause Analysis (RCA) capabilities and comprehensive incident response across the infrastructure stack.
 
 ### Certification Challenge Data Scope: Redis-Focused Subset
 - **Focused Corpus**: Redis-specific runbooks and procedures
@@ -265,30 +271,27 @@ SREnity is deployed as a local Streamlit application with the following componen
 
 SREnity employs a sophisticated ensemble approach combining multiple retrieval strategies:
 
-#### Retrieval Techniques and Rationale:
+#### Retrieval Methods and Advanced Techniques:
 
+**Baseline Method:**
 1. **Naive Vector Retriever**: Semantic similarity using OpenAI embeddings
-   - **Rationale**: Captures contextual meaning and relationships in technical documentation for comprehensive coverage of related concepts.
+   - **Rationale**: Captures semantic meaning and contextual relationships in technical documentation for comprehensive coverage of related concepts.
 
-2. **BM25 + Reranker**: Keyword-based retrieval with Cohere reranking
-   - **Rationale**: Provides precise keyword matching for specific commands and procedures while reranking ensures most relevant results are prioritized.
+**Advanced Retrieval Techniques:**
 
-3. **Ensemble Combination**: Intelligent fusion of both approaches
-   - **Rationale**: Combines semantic understanding with keyword precision to maximize both recall and accuracy for complex SRE scenarios.
+2. **BM25 Retriever**: Lexical keyword-based retrieval
+   - **Rationale**: Provides precise lexical matching for specific commands, error messages, and procedures. BM25 excels at exact keyword matching and is particularly effective for technical documentation with specific terminology.
 
-#### Advanced Retrieval Techniques Implemented:
+3. **Contextual Compression**: Reranking-based noise reduction and precision optimization
+   - **Rationale**: Reduces irrelevant content in retrieved documents while maintaining critical technical information. Uses Cohere reranking to filter and prioritize the most relevant chunks, improving signal-to-noise ratio.
 
-- **Contextual Compression**: BM25 retrieval with reranking for precision
-  - **Rationale**: Reduces noise in retrieved documents while maintaining relevant technical content for focused responses.
+4. **Ensemble Combination**: Intelligent fusion of semantic and lexical approaches
+   - **Rationale**: Combines the semantic understanding of vector search with the lexical precision of BM25 + compression. Leverages complementary strengths to maximize both recall and accuracy for complex SRE scenarios.
 
-- **Semantic Understanding**: Vector similarity for contextual relevance
-  - **Rationale**: Enables retrieval of conceptually related content even when exact keywords don't match, crucial for incident response scenarios.
-
-- **Hybrid Approach**: Combines strengths of both methods
-  - **Rationale**: Leverages complementary strengths of semantic and keyword-based retrieval for comprehensive coverage of SRE knowledge.
-
-- **Dynamic Weighting**: Adaptive combination based on query characteristics
-  - **Rationale**: Automatically adjusts retrieval strategy based on query type (procedural vs. conceptual) for optimal results.
+#### Technical Implementation:
+- **LangChain Integration**: ContextualCompressionRetriever with CohereRerank
+- **EnsembleRetriever**: Combines Naive + BM25+Reranker with equal weighting
+- **LLM Synthesis**: GPT-4.1-nano for intelligent response combination
 
 #### Configuration Optimization:
 - **BM25 Parameters**: Optimized through systematic testing of 12→3, 12→4, 12→5, 12→6 configurations
