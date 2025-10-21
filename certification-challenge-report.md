@@ -4,7 +4,7 @@
 
 SREnity is an End-to-End Agentic AI Prototype designed to accelerate Production Incident resolution using RAG-based runbook retrieval. The broader vision encompasses a comprehensive SRE assistant covering all infrastructure components (Redis, Elasticsearch, Cloud SQL, CI/CD, etc.) with advanced retrieval techniques and agentic reasoning.
 
-!SREnity(SREnity.png)
+![SREnity](SREnity.png)
 
 **For this Certification Challenge, I have focused the scope on Redis-specific query response to demonstrate the core capabilities and evaluation methodology.** This focused implementation showcases the technical architecture, advanced retrieval methods, and RAGAS evaluation framework that can be extended to the full SREnity vision.
 
