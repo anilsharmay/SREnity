@@ -73,13 +73,14 @@ Production incidents demand immediate, accurate responses, but SREs currently fa
 2. **Agentic Reasoning**: LangGraph-based ReAct pattern for tool selection and response synthesis
 3. **Knowledge Base**: GitLab SRE runbooks processed and indexed for semantic search
 4. **Web Integration**: Tavily search for latest updates and CVE information
+5. **Guardrails**: Reject all off-topic queries
 
 #### Technology Stack with Justifications:
 
-- **LLM**: OpenAI GPT-4 - Superior reasoning capabilities for complex SRE scenarios and technical decision-making
-- **Embeddings**: OpenAI text-embedding-3-large - State-of-the-art semantic understanding for technical documentation
+- **LLM**: OpenAI GPT-4.1 nano - Fast, economical, excellent instruction following and tool calling
+- **Embeddings**: OpenAI text-embedding-3-small - Economical, pairs well with gpt-4.1-nano
 - **Vector Database**: Qdrant - High-performance similarity search optimized for large-scale document retrieval
-- **Retrieval**: BM25 + Cohere Rerank - Combines keyword precision with semantic understanding for comprehensive coverage
+- **Retrieval**: Ensemble Retriever combing BM25 + Cohere Rerank  and Naive retrievers - Combines keyword precision with semantic understanding for comprehensive coverage
 - **Orchestration**: LangChain - Mature ecosystem with robust RAG pipeline management and tool integration
 - **Agent Framework**: LangGraph - Advanced agentic reasoning with ReAct pattern for tool selection and response synthesis
 - **Frontend**: Streamlit - Rapid deployment with professional UI optimized for incident response workflows
@@ -87,18 +88,20 @@ Production incidents demand immediate, accurate responses, but SREs currently fa
 
 ### Agent Usage and Reasoning
 SREnity employs agentic reasoning through a ReAct (Reasoning + Acting) pattern:
-- **Reasoning**: Analyzes incident context and determines appropriate tools
+- **Reasoning**: Analyzes input context and determines appropriate tools
 - **Acting**: Executes runbook search and web search tools
 - **Synthesis**: Combines retrieved information into actionable guidance
+
+The Agent detects if the query can be answered using the runbook corpus. If yes, invokes ```search_runbook``` tool. If the query is about latest updates, CVEs, or version-specific issues, it uses ```search_web``` tool instead. Any off-topic queries not related to SRE operations are rejected as out of domain queries.
 
 ---
 
 ## 3. Data Sources
 
-### Primary Data Source: GitLab SRE Runbooks
-- **Source**: runbooks.gitlab.com
+### Primary Data Source: GitLab SRE Runbooks simulating a large Enterprise documentation
+- **Source**: [runbooks.gitlab.com](https://runbooks.gitlab.com]
 - **Full Corpus**: Production SRE procedures for Cloud SQL, Elastic, CI/CD, Redis, and infrastructure
-- **Format**: Markdown runbooks with detailed troubleshooting procedures
+- **Format**: Markdown runbooks with detailed troubleshooting procedures including code blocks
 - **Quality**: Rich, comprehensive content with real production scenarios
 - **Full Scope**: 33+ runbook documents covering critical infrastructure components
 
@@ -106,20 +109,20 @@ SREnity employs agentic reasoning through a ReAct (Reasoning + Acting) pattern:
 - **Focused Corpus**: Redis-specific runbooks and procedures
 - **Filtering**: Service-based filtering to Redis components only
 - **Rationale**: Demonstrates methodology while managing evaluation complexity
-- **Extensibility**: Same approach can be applied to full corpus
+- **Extensibility**: Same approach can be applied to full corpus, gradually onboarding additional service area runbooks
 
 ### Data Processing Pipeline
 1. **Document Loading**: Automated scraping and processing of GitLab runbooks
-2. **Preprocessing**: HTML to Markdown conversion for consistent formatting
-3. **Chunking Strategy**: Tiktoken-based chunking (1000 tokens, 200 overlap)
-4. **Service Filtering**: Focused on Redis services for targeted responses
+2. **Preprocessing**: HTML to Markdown conversion for consistent formatting and avoiding redundant HTML tag data impacting retrieval efficiency
+3. **Chunking Strategy**: Tiktoken-based chunking (1000 tokens, 200 overlap). Semantic chunking was NOT considered given the technical nature of the documents requiring lexical coverage is more important
+4. **Service Filtering**: Focused on Redis services for targeted responses and reducing scope
 5. **Vector Indexing**: OpenAI embeddings stored in Qdrant vector database
 
 ### External APIs and Use Cases
 
 - **Tavily Search**: Web search for latest updates, CVEs, and version-specific issues
   - **Use Case**: "Redis 7.0 memory leak CVE" → Latest security updates and patches
-  - **Use Case**: "Redis 6.2 performance issues" → Version-specific troubleshooting
+  - **Use Case**: "Latest version of Redis" → Version-specific queries
   - **Use Case**: "Redis cluster scaling best practices 2024" → Recent industry updates
 
 - **Cohere Rerank**: Advanced reranking for retrieval precision
@@ -163,7 +166,7 @@ SREnity is deployed as a local Streamlit application with the following componen
 
 #### Backend Components:
 - **Vector Database**: Qdrant instance with pre-indexed runbook embeddings
-- **Retrieval Engine**: Ensemble retriever combining multiple strategies
+- **Retrieval Engine**: Ensemble retriever combining Naive + BM25-Reranker strategies
 - **Agent Engine**: LangGraph-based reasoning system
 - **Tool Integration**: Runbook search and web search capabilities
 
@@ -171,7 +174,6 @@ SREnity is deployed as a local Streamlit application with the following componen
 - **Interactive Chat**: Streamlit-based conversational interface
 - **Real-time Responses**: Immediate access to SRE knowledge
 - **Markdown Support**: Rich formatting for technical procedures
-- **Dark Theme**: Professional UI optimized for incident response
 
 ### Key Features:
 1. **Intelligent Query Processing**: Natural language understanding of incident scenarios
@@ -195,35 +197,48 @@ SREnity is deployed as a local Streamlit application with the following componen
 ### RAGAS Evaluation Framework
 Comprehensive evaluation using RAGAS metrics across 6 dimensions:
 
-#### Evaluation Metrics:
-1. **Faithfulness**: Accuracy of retrieved information (0.736)
-2. **Answer Relevancy**: Relevance to user query (0.871)
-3. **Context Precision**: Precision of retrieved context (0.705)
-4. **Context Recall**: Completeness of information retrieval (0.917)
-5. **Answer Correctness**: Overall correctness of responses (0.461)
-6. **Context Entity Recall**: Command and entity coverage (0.036)
+#### RAGAS evaluation for Naive Vector Retriever (Baseline):
 
-#### Test Dataset:
-- **Size**: 8 synthetic test questions generated from runbook content
-- **Coverage**: Redis-specific incident scenarios and procedures
-- **Quality**: RAGAS SDG (Synthetic Data Generation) for realistic test cases
-- **Validation**: Human-verified incident scenarios
+| Metric | Score | Performance Level | Critical Issues |
+|--------|-------|------------------|-----------------|
+| **Faithfulness** | 0.516 | 🟠 Fair | Moderate accuracy concerns |
+| **Answer Relevancy** | 0.810 | 🟢 Excellent | Strong query relevance |
+| **Context Precision** | 0.750 | 🟡 Good | Acceptable precision |
+| **Context Recall** | 0.396 | 🔴 Poor | **Critical: Missing information** |
+| **Answer Correctness** | 0.378 | 🔴 Poor | **Critical: Low correctness** |
+| **Context Entity Recall** | 0.026 | 🔴 Poor | **Critical: Poor command coverage** |
 
-### Performance Results:
+#### Performance Conclusions:
 
-#### Ensemble Retriever (Production):
-- **Faithfulness**: 0.736 (+42.6% vs Naive)
-- **Answer Relevancy**: 0.871 (+7.5% vs Naive)
-- **Context Precision**: 0.705 (-6.0% vs Naive)
-- **Context Recall**: 0.917 (+131.6% vs Naive)
-- **Answer Correctness**: 0.461 (+22.0% vs Naive)
-- **Context Entity Recall**: 0.036 (+44.0% vs Naive)
+**Critical Issues Identified:**
+1. **Context Recall (0.396)**: Only retrieves ~40% of relevant information - **major gap for SRE incidents**
+2. **Answer Correctness (0.378)**: Only ~38% of responses are fully correct - **unacceptable for production**
+3. **Context Entity Recall (0.026)**: Extremely poor command/entity coverage - **missing critical procedures**
 
-#### Key Performance Insights:
-- **Superior Context Recall**: +131.6% improvement ensures comprehensive information retrieval
-- **Enhanced Faithfulness**: +42.6% improvement provides more reliable responses
-- **Balanced Performance**: Combines semantic understanding with keyword precision
-- **Production Ready**: Proven superior across multiple evaluation metrics
+**Strengths:**
+- **Answer Relevancy (0.810)**: Strong semantic understanding of queries
+- **Context Precision (0.750)**: Good precision when information is retrieved
+
+**Production Readiness Assessment:**
+- **❌ NOT PRODUCTION READY** - Critical gaps in information retrieval and response accuracy
+- **❌ High Risk** - Missing 60% of relevant information during incidents
+- **❌ Unreliable** - Only 38% correct responses for critical SRE procedures
+
+**Key Insights:**
+- **Semantic retrieval alone is insufficient** for comprehensive SRE incident response
+- **Missing information is the primary bottleneck** (60% recall gap)
+- **Advanced retrieval techniques are essential** to address these critical gaps
+
+#### Other Observations and Learnings:
+
+**RAGAS Variability Analysis:**
+- **LLM-based metrics** (Faithfulness, Answer Correctness) show **high variability** 
+- **Retrieval metrics** (Context Recall, Context Entity Recall) are **more stable** 
+
+**Evaluation Methodology Learnings:**
+- **Multiple evaluation runs** necessary due to RAGAS variability
+- **Retrieval metrics** more reliable than LLM-based metrics
+- **Production selection** should prioritize consistent performance over peak scores
 
 ---
 
@@ -270,11 +285,22 @@ SREnity employs a sophisticated ensemble approach combining multiple retrieval s
 | **BM25 + Reranker** | 0.700 | 0.786 | 0.500 | 0.625 | 0.369 |
 | **Ensemble** | 0.736 | 0.871 | 0.705 | 0.917 | 0.461 |
 
-#### Ensemble Advantages:
-- **Comprehensive Coverage**: +131.6% Context Recall
-- **High Accuracy**: +42.6% Faithfulness improvement
-- **Balanced Performance**: Maintains precision while maximizing recall
-- **Production Proven**: Superior across critical metrics
+
+### Performance Results:
+
+#### Ensemble Retriever Improvements:
+- **Faithfulness**: 0.736 (+42.6% vs Naive)
+- **Answer Relevancy**: 0.871 (+7.5% vs Naive)
+- **Context Precision**: 0.705 (-6.0% vs Naive)
+- **Context Recall**: 0.917 (+131.6% vs Naive)
+- **Answer Correctness**: 0.461 (+22.0% vs Naive)
+- **Context Entity Recall**: 0.036 (+44.0% vs Naive)
+
+#### Key Performance Insights:
+- **Superior Context Recall**: +131.6% improvement ensures comprehensive information retrieval
+- **Enhanced Faithfulness**: +42.6% improvement provides more reliable responses
+- **Balanced Performance**: Combines semantic understanding with keyword precision
+- **Improved overall performance**: Proven superior across multiple evaluation metrics except a minor (6%) drop in Context Precision
 
 ---
 
