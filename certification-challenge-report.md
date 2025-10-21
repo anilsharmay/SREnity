@@ -48,7 +48,7 @@ Production incidents demand immediate, accurate responses, but SREs currently fa
 
 **For this certification challenge, I demonstrate the SREnity approach using Redis-specific scenarios:**
 
-**Typical Redis SRE Questions During Incidents**:
+**Example Redis SRE Questions During Incidents**:
 - "How do I restart Redis service without losing data?"
 - "What's the Redis failover procedure for this cluster?"
 - "How do I check Redis memory usage and optimize it?"
@@ -79,16 +79,19 @@ Production incidents demand immediate, accurate responses, but SREs currently fa
 4. **Web Integration**: Tavily search for latest updates and CVE information
 5. **Guardrails**: Reject all off-topic queries
 
+
 #### Technology Stack with Justifications:
 
 - **LLM**: OpenAI GPT-4.1 nano - Fast, economical, excellent instruction following and tool calling
 - **Embeddings**: OpenAI text-embedding-3-small - Economical, pairs well with gpt-4.1-nano
 - **Vector Database**: Qdrant - High-performance similarity search optimized for large-scale document retrieval
-- **Retrieval**: Ensemble Retriever combing BM25 + Cohere Rerank  and Naive retrievers - Combines keyword precision with semantic understanding for comprehensive coverage
+- **Retrieval**: Ensemble Retriever combining BM25 + Cohere Rerank and Naive retrievers - Combines keyword precision with semantic understanding for comprehensive coverage
 - **Orchestration**: LangChain - Mature ecosystem with robust RAG pipeline management and tool integration
 - **Agent Framework**: LangGraph - Advanced agentic reasoning with ReAct pattern for tool selection and response synthesis
 - **Frontend**: Streamlit - Rapid deployment with professional UI optimized for incident response workflows
 - **Evaluation**: RAGAS - Comprehensive framework for measuring retrieval quality and response accuracy
+- **Monitoring**: LangSmith - Real-time tracing and performance monitoring for agent reasoning and tool usage
+- **Serving & Inference**: Local Streamlit deployment - Single-process application with API-based LLM calls and cached database components
 
 ### Agent Usage and Reasoning
 SREnity employs agentic reasoning through a ReAct (Reasoning + Acting) pattern:
@@ -96,7 +99,7 @@ SREnity employs agentic reasoning through a ReAct (Reasoning + Acting) pattern:
 - **Acting**: Executes runbook search and web search tools
 - **Synthesis**: Combines retrieved information into actionable guidance
 
-The Agent detects if the query can be answered using the runbook corpus. If yes, invokes ```search_runbook``` tool. If the query is about latest updates, CVEs, or version-specific issues, it uses ```search_web``` tool instead. Any off-topic queries not related to SRE operations are rejected as out of domain queries.
+The Agent detects if the query can be answered using the runbook corpus. If yes, invokes ```search_runbooks``` tool. If the query is about latest updates, CVEs, or version-specific issues, it uses ```search_web``` tool instead. Any off-topic queries not related to SRE operations are rejected as out of domain queries.
 
 ---
 
@@ -198,8 +201,18 @@ SREnity is deployed as a local Streamlit application with the following componen
 
 ## 5. Golden Test Dataset
 
-### RAGAS Evaluation Framework
-Comprehensive evaluation using RAGAS metrics across 6 dimensions:
+### Test Dataset Creation
+- **Method**: RAGAS Synthetic Data Generation (SDG) using GitLab runbook corpus
+- **Dataset Size**: 8 synthetic questions generated from 33 Redis runbook documents (Trying larger set resulted in failures and time outs)
+- **Quality Assurance**: Each scenario includes ground truth answers and context requirements
+- **Caching Strategy**: Implemented JSON serialization/deserialization to avoid regeneration costs
+- **Reusability**: Same dataset used for consistent benchmarking across retrieval iterations
+
+### Evaluation Methodology
+- **Framework**: RAGAS with 6 core metrics (Faithfulness, Answer Relevancy, Context Precision, Context Recall, Answer Correctness, Context Entity Recall)
+- **Baseline**: Naive Vector Retriever as control group
+- **Comparison**: BM25+Reranker and Ensemble retriever (Combining Naive and BM25+reranker) evaluated against baseline
+- **Consistency**: Multiple evaluation runs to account for RAGAS variability
 
 #### RAGAS evaluation for Naive Vector Retriever (Baseline):
 
@@ -249,6 +262,7 @@ Comprehensive evaluation using RAGAS metrics across 6 dimensions:
 ## 6. Advanced Retrieval
 
 ### Ensemble Retrieval Implementation
+
 SREnity employs a sophisticated ensemble approach combining multiple retrieval strategies:
 
 #### Retrieval Techniques and Rationale:
@@ -277,8 +291,9 @@ SREnity employs a sophisticated ensemble approach combining multiple retrieval s
   - **Rationale**: Automatically adjusts retrieval strategy based on query type (procedural vs. conceptual) for optimal results.
 
 #### Configuration Optimization:
-- **BM25 Parameters**: 12 initial chunks → 4 reranked results
-- **Vector Parameters**: 3 semantic similarity matches
+- **BM25 Parameters**: Optimized through systematic testing of 12→3, 12→4, 12→5, 12→6 configurations
+- **Selection Criteria**: 12→4 chosen based on optimal balance of Context Recall (+57.8%) and Context Entity Recall (+687%) while maintaining acceptable precision
+- **Vector Parameters**: 3 semantic similarity matches for comprehensive coverage
 - **Ensemble Weights**: Balanced combination (50/50) with LLM-based synthesis
 
 ### Performance Comparison:
@@ -333,23 +348,12 @@ The ensemble retriever demonstrates superior performance across all critical dim
 
 ### Future Improvement Plans:
 
-#### Short-term (1-3 months):
-1. **Expand Corpus**: Include additional GitLab runbooks beyond Redis
-2. **Fine-tune Parameters**: Optimize retrieval parameters for specific incident types
-3. **Add Monitoring**: Implement performance tracking and alerting
-4. **User Feedback**: Collect and incorporate SRE team feedback
-
-#### Medium-term (3-6 months):
-1. **Multi-modal Support**: Include diagrams and configuration files
-2. **Incident History**: Learn from past incident resolutions
-3. **Automated Updates**: Real-time runbook synchronization
-4. **Integration**: Connect with incident management systems
-
-#### Long-term (6+ months):
-1. **Predictive Analytics**: Anticipate potential issues
-2. **Automated Response**: Execute remediation procedures
-3. **Knowledge Graph**: Build comprehensive infrastructure knowledge
-4. **Cross-team Collaboration**: Support multiple engineering teams
+- **Context Entity Recall Optimization**: Focus on improving command/entity coverage through parameter tuning and alternative retrieval strategies
+- **Corpus Expansion**: Add 2-3 additional GitLab runbook services (Elastic, Cloud SQL) to validate methodology scalability
+- **Production Polish**: Complete Streamlit app optimization, comprehensive testing, and final documentation
+- **Multi-Signal Integration**: Incorporate logs, traces, and historical postmortem reports for preliminary incident RCA
+- **SRE Feedback Mechanism**: Build user feedback collection and model improvement pipeline
+- **Enterprise Deployment**: Scalable cloud architecture 
 
 ---
 
