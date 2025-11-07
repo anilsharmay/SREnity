@@ -1,0 +1,2 @@
+[console_scripts]
+srenity = src.main:main

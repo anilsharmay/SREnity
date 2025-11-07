@@ -29,3 +29,25 @@ export interface Service {
   status: 'healthy' | 'degraded' | 'critical';
 }
 
+// Analysis types
+export interface RCAData {
+  root_cause: string;
+  evidence: string[];
+  recommendations: string[];
+}
+
+export interface RunbookAction {
+  action_title: string;
+  steps: string[];
+  source_document: string;
+  source_url: string;
+  relevance_score?: number;
+}
+
+export interface AnalysisUpdate {
+  type: 'status' | 'rca_complete' | 'runbook_complete' | 'error';
+  message?: string;
+  rca?: RCAData;
+  runbooks?: RunbookAction[];
+}
+

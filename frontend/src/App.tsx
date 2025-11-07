@@ -1,52 +1,51 @@
+import { useState } from 'react';
 import Dashboard from './components/Dashboard';
+import AnalysisView from './components/AnalysisView';
 import { mockAlerts, mockServices } from './data/mockData';
-import { analyzeIncident } from './services/api';
+import type { Alert, Service } from './types';
 import './styles/globals.css';
 import './styles/dashboard.css';
 
+type View = 'dashboard' | 'analysis';
+
+interface AnalysisContext {
+  alert?: Alert;
+  service?: Service;
+  query: string;
+}
+
 function App() {
-  const handleAnalyzeAlert = async (alertId: string) => {
+  const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [analysisContext, setAnalysisContext] = useState<AnalysisContext | null>(null);
+
+  const handleAnalyzeAlert = (alertId: string) => {
     const alert = mockAlerts.find(a => a.id === alertId);
     if (!alert) {
       console.error('Alert not found:', alertId);
       return;
     }
 
-    try {
-      const query = `${alert.title}. ${alert.description || ''} Affects: ${alert.affects}`;
-      const response = await analyzeIncident({
-        alert_id: alertId,
-        query: query
-      });
-      console.log('Analysis response:', response);
-      // TODO: Show results in UI (modal or results view)
-      window.alert(`Analysis: ${response.message || response.response || 'Analysis started'}`);
-    } catch (error) {
-      console.error('Error analyzing alert:', error);
-      window.alert(`Error: ${error instanceof Error ? error.message : 'Failed to analyze'}`);
-    }
+    const query = `${alert.title}. ${alert.description || ''} Affects: ${alert.affects}`;
+    setAnalysisContext({
+      alert,
+      query,
+    });
+    setCurrentView('analysis');
   };
 
-  const handleAnalyzeService = async (serviceId: string) => {
+  const handleAnalyzeService = (serviceId: string) => {
     const service = mockServices.find(s => s.id === serviceId);
     if (!service) {
       console.error('Service not found:', serviceId);
       return;
     }
 
-    try {
-      const query = `Analyze service ${service.name} in ${service.environment}. Status: ${service.status}`;
-      const response = await analyzeIncident({
-        service_id: serviceId,
-        query: query
-      });
-      console.log('Analysis response:', response);
-      // TODO: Show results in UI (modal or results view)
-      window.alert(`Analysis: ${response.message || response.response || 'Analysis started'}`);
-    } catch (error) {
-      console.error('Error analyzing service:', error);
-      window.alert(`Error: ${error instanceof Error ? error.message : 'Failed to analyze'}`);
-    }
+    const query = `Analyze service ${service.name} in ${service.environment}. Status: ${service.status}`;
+    setAnalysisContext({
+      service,
+      query,
+    });
+    setCurrentView('analysis');
   };
 
   const handleServiceDetails = (serviceId: string) => {
@@ -58,6 +57,22 @@ function App() {
     console.log('Viewing alert details:', alertId);
     // TODO: Navigate to alert details view
   };
+
+  const handleBackToDashboard = () => {
+    setCurrentView('dashboard');
+    setAnalysisContext(null);
+  };
+
+  if (currentView === 'analysis' && analysisContext) {
+    return (
+      <AnalysisView
+        alert={analysisContext.alert}
+        service={analysisContext.service}
+        query={analysisContext.query}
+        onBack={handleBackToDashboard}
+      />
+    );
+  }
 
   return (
     <Dashboard
