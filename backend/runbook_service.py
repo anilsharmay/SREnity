@@ -7,6 +7,11 @@ and extracts structured information (action titles, steps, source URLs) for disp
 from typing import List, Dict, Optional
 import json
 
+# Cache for database components (singleton pattern)
+_cached_vector_store = None
+_cached_chunked_docs = None
+_cached_ensemble_retriever = None
+
 # Lazy imports to avoid loading database on startup
 def _get_ensemble_retriever():
     from src.rag.ensemble_retriever import create_ensemble_retriever
@@ -23,6 +28,17 @@ def _get_model_factory():
 def _get_chat_prompt_template():
     from langchain_core.prompts import ChatPromptTemplate
     return ChatPromptTemplate
+
+def _get_or_create_database_components():
+    """Get cached database components or create them once"""
+    global _cached_vector_store, _cached_chunked_docs
+    
+    if _cached_vector_store is None or _cached_chunked_docs is None:
+        create_database_components = _get_database_components()
+        _cached_vector_store, _cached_chunked_docs = create_database_components()
+        print("✅ Database components initialized and cached")
+    
+    return _cached_vector_store, _cached_chunked_docs
 
 
 async def search_runbooks_with_metadata(
@@ -51,18 +67,23 @@ async def search_runbooks_with_metadata(
     recommendations_text = ", ".join(rca_recommendations)
     search_query = f"{root_cause}. Recommended actions: {recommendations_text}"
     
-    # Get ensemble retriever (lazy import)
-    create_database_components = _get_database_components()
-    get_model_factory = _get_model_factory()
-    create_ensemble_retriever = _get_ensemble_retriever()
+    # Get cached database components (singleton - only initialized once)
+    vector_store, chunked_docs = _get_or_create_database_components()
     
-    vector_store, chunked_docs = create_database_components()
-    model_factory = get_model_factory()
+    # Get or create ensemble retriever (cache it too)
+    global _cached_ensemble_retriever
+    if _cached_ensemble_retriever is None:
+        get_model_factory = _get_model_factory()
+        create_ensemble_retriever = _get_ensemble_retriever()
+        model_factory = get_model_factory()
+        
+        _cached_ensemble_retriever = create_ensemble_retriever(
+            vector_store, chunked_docs, model_factory,
+            naive_k=3, bm25_k=12, rerank_k=max_results
+        )
+        print("✅ Ensemble retriever initialized and cached")
     
-    ensemble_retriever = create_ensemble_retriever(
-        vector_store, chunked_docs, model_factory,
-        naive_k=3, bm25_k=12, rerank_k=max_results
-    )
+    ensemble_retriever = _cached_ensemble_retriever
     
     # Retrieve documents
     retrieved_docs = ensemble_retriever.invoke(search_query)

@@ -9,10 +9,15 @@ from typing import Optional
 import json
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
 
-# Add project root and backend directory to path
+# Load environment variables from .env file
 backend_dir = Path(__file__).parent
 project_root = backend_dir.parent
+env_path = project_root / '.env'
+load_dotenv(dotenv_path=env_path)
+
+# Add project root and backend directory to path
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_dir))
 
