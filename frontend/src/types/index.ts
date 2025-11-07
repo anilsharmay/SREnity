@@ -32,8 +32,12 @@ export interface Service {
 // Analysis types
 export interface RCAData {
   root_cause: string;
+  summary?: string;  // Full summary
   evidence: string[];
   recommendations: string[];
+  web_result?: string;  // Complete web tier analysis
+  app_result?: string;  // Complete app tier analysis
+  db_result?: string;  // Complete db tier analysis
 }
 
 export interface RunbookAction {

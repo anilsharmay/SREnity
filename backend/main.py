@@ -21,7 +21,11 @@ load_dotenv(dotenv_path=env_path)
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_dir))
 
-from rca_service import rca_agent_analyze
+# Add notebooks directory to path to import run.py
+notebooks_dir = backend_dir / "notebooks"
+sys.path.insert(0, str(notebooks_dir))
+
+from run import analyze_scenario_stream
 from runbook_service import search_runbooks_with_metadata
 
 app = FastAPI(title="SREnity API", version="1.0.0")
@@ -56,53 +60,48 @@ async def analyze_stream(request: AnalyzeRequest):
     """
     Stream analysis updates via Server-Sent Events
     
-    Orchestrates:
-    1. RCA Agent analysis (collaborator's LangGraph agent)
-    2. Runbook RAG search (using RCA recommendations)
-    3. Structured results with action steps and source URLs
+    Directly calls run.py analyze_scenario_stream function and passes through output
     """
     async def event_generator():
         try:
-            rca_recommendations = None
-            root_cause = None
+            # Use default scenario
+            scenario = "scenario1_web_issue"
             
-            # Phase 1: RCA Analysis (stream from collaborator's agent)
-            async for update in rca_agent_analyze(
-                query=request.query,
-                alert_id=request.alert_id,
-                service_id=request.service_id
-            ):
+            # Stream from run.py and pass through output directly
+            rca_data = None
+            async for update in analyze_scenario_stream(scenario=scenario, query=request.query):
                 # Yield status strings as-is
                 if isinstance(update, str):
                     yield f"data: {json.dumps({'type': 'status', 'message': update})}\n\n"
                 
-                # Capture RCA results
+                # Pass through RCA results directly from run.py with complete output
                 elif isinstance(update, dict) and update.get('type') == 'rca_complete':
+                    rca_data = update.get('rca')
+                    # Pass through complete output from run.py (includes full summary and all results)
                     yield f"data: {json.dumps(update)}\n\n"
-                    rca_data = update.get('rca', {})
-                    rca_recommendations = rca_data.get('recommendations', [])
-                    root_cause = rca_data.get('root_cause', '')
-            
-            # Phase 2: Runbook RAG Search (only if RCA complete)
-            if rca_recommendations and root_cause:
-                yield f"data: {json.dumps({'type': 'status', 'message': 'Searching runbooks for resolution steps...'})}\n\n"
-                
-                try:
-                    runbook_results = await search_runbooks_with_metadata(
-                        rca_recommendations=rca_recommendations,
-                        root_cause=root_cause,
-                        max_results=3
-                    )
                     
-                    yield f"data: {json.dumps({
-                        'type': 'runbook_complete',
-                        'runbooks': runbook_results
-                    })}\n\n"
-                except Exception as e:
-                    yield f"data: {json.dumps({
-                        'type': 'error',
-                        'message': f'Error searching runbooks: {str(e)}'
-                    })}\n\n"
+                    # Phase 2: Runbook RAG Search
+                    if rca_data:
+                        yield f"data: {json.dumps({'type': 'status', 'message': 'Searching runbooks for resolution steps...'})}\n\n"
+                        
+                        try:
+                            # Use full summary for runbook search (not truncated root_cause)
+                            search_query = rca_data.get('summary', '') or rca_data.get('root_cause', '')
+                            runbook_results = await search_runbooks_with_metadata(
+                                rca_recommendations=rca_data.get('recommendations', []),
+                                root_cause=search_query[:1000] if search_query else '',  # Use first 1000 chars for search
+                                max_results=3
+                            )
+                            
+                            yield f"data: {json.dumps({
+                                'type': 'runbook_complete',
+                                'runbooks': runbook_results
+                            })}\n\n"
+                        except Exception as e:
+                            yield f"data: {json.dumps({
+                                'type': 'error',
+                                'message': f'Error searching runbooks: {str(e)}'
+                            })}\n\n"
             
             # Signal completion
             yield "data: [DONE]\n\n"
@@ -116,7 +115,7 @@ async def analyze_stream(request: AnalyzeRequest):
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",  # Disable buffering for nginx
+            "X-Accel-Buffering": "no",
         }
     )
 

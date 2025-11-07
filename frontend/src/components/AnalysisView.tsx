@@ -98,13 +98,42 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
           </div>
           <div className="card-content">
             <div className="rca-section">
-              <h3>Root Cause Identified</h3>
-              <p className="root-cause-text">{rca.root_cause}</p>
+              <h3>Root Cause Analysis Summary</h3>
+              <div className="summary-text">
+                <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                  {rca.summary || rca.root_cause}
+                </pre>
+              </div>
             </div>
+
+            {/* Tier-specific Results */}
+            {(rca.web_result || rca.app_result || rca.db_result) && (
+              <div className="rca-section">
+                <h3>Layer Analysis Results</h3>
+                {rca.web_result && (
+                  <div className="tier-result">
+                    <h4>Web Tier Analysis</h4>
+                    <p className="tier-text">{rca.web_result}</p>
+                  </div>
+                )}
+                {rca.app_result && (
+                  <div className="tier-result">
+                    <h4>App Tier Analysis</h4>
+                    <p className="tier-text">{rca.app_result}</p>
+                  </div>
+                )}
+                {rca.db_result && (
+                  <div className="tier-result">
+                    <h4>DB Tier Analysis</h4>
+                    <p className="tier-text">{rca.db_result}</p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {rca.evidence && rca.evidence.length > 0 && (
               <div className="rca-section">
-                <h3>Evidence</h3>
+                <h3>Evidence Summary</h3>
                 <ul className="evidence-list">
                   {rca.evidence.map((item, idx) => (
                     <li key={idx}>{item}</li>

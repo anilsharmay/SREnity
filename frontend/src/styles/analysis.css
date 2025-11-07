@@ -225,6 +225,55 @@
   border-radius: var(--radius-sm);
 }
 
+.summary-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  padding: var(--spacing-md);
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid #3b82f6;
+  border-radius: var(--radius-sm);
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.summary-text pre {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--text-primary);
+}
+
+.tier-result {
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  border-left: 3px solid #8b5cf6;
+}
+
+.tier-result:last-child {
+  margin-bottom: 0;
+}
+
+.tier-result h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #a78bfa;
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.tier-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
 .evidence-list,
 .recommendations-list {
   list-style: none;
