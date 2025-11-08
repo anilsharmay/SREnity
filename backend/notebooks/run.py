@@ -27,12 +27,18 @@ if str(backend_parent) not in sys.path:
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 
-from backend.analysis.tools import create_web_rag_tool, create_app_rag_tool, create_db_rag_tool
+from backend.analysis.tools import (
+    create_web_rag_tool,
+    create_app_rag_tool,
+    create_db_rag_tool,
+    create_cache_rag_tool,
+)
 from backend.analysis.graph import (
-    create_router_node,
+    create_incident_manager_node,
     create_web_tool_node,
     create_app_tool_node,
     create_db_tool_node,
+    create_cache_tool_node,
     create_aggregator_node,
     create_summarizer_node,
     build_multi_layer_graph,
@@ -63,9 +69,21 @@ def load_logs(scenario="scenario1_web_issue"):
     
     # Load each log file separately - keep them separate, don't combine
     logs = {}
-    for tier in ["web", "app", "db"]:
+    for tier in ["web", "app", "db", "cache"]:
         path = logs_dir / f"{tier}.log"
-        if path.exists():
+        if tier == "cache" and not path.exists():
+            print("Cache log missing, inserting default Redis error sample.")
+            logs[tier] = """2024-01-17T09:00:01.950Z [ERROR] [trace_id:req-401-a1b2c3] [redis-node:cache-primary] [Redis] ERR max number of clients reached - exception while processing GET user:profile:12345
+2024-01-17T09:00:02.012Z [WARN]  [redis-node:cache-primary] [Redis] Connected clients: 998 / maxclients: 1000 - pool almost exhausted
+2024-01-17T09:00:02.145Z [ERROR] [trace_id:req-402-a2b3c4] [redis-node:cache-primary] [Redis] ConnectionError: ERR max number of clients reached (service: order-service)
+2024-01-17T09:00:02.214Z [WARN]  [redis-node:cache-primary] [Redis] Slow command: HGETALL cart:session:88321 took 284ms (threshold 100ms)
+2024-01-17T09:00:02.318Z [ERROR] [trace_id:req-403-a3b4c5] [redis-node:cache-primary] [Redis] BLPOP queue:notifications timeout - blocking clients: 12
+2024-01-17T09:00:02.443Z [ERROR] [trace_id:req-404-a4b5c6] [redis-node:cache-primary] [Redis] Connection reset by peer - unable to allocate new client connection
+2024-01-17T09:00:02.576Z [WARN]  [redis-node:cache-primary] [Redis] INFO clients: connected_clients=1000, blocked_clients=15, tracking_clients=0
+2024-01-17T09:00:02.712Z [ERROR] [trace_id:req-405-a5b6c7] [redis-node:cache-primary] [Redis] redis.exceptions.ConnectionError: Timeout connecting to Redis - connection pool exhausted
+2024-01-17T09:00:02.895Z [ERROR] [trace_id:req-406-a6b7c8] [redis-node:cache-primary] [Redis] ERR max number of clients reached - failed command: SET session:token:99431
+2024-01-17T09:00:03.015Z [WARN]  [redis-node:cache-primary] [Redis] Recommendation: review connection pooling configuration and consider increasing maxclients or scaling cache tier"""
+        elif path.exists():
             with open(path, encoding="utf-8") as f:
                 logs[tier] = f.read()
         else:
@@ -90,23 +108,26 @@ async def analyze_scenario_stream(scenario="scenario1_web_issue", query=None):
     web_rag_tool = create_web_rag_tool()
     app_rag_tool = create_app_rag_tool()
     db_rag_tool = create_db_rag_tool()
+    cache_rag_tool = create_cache_rag_tool()
     
     # Create nodes for each layer
     yield "Creating graph nodes..."
-    router_node = create_router_node()
+    incident_manager_node = create_incident_manager_node()
     web_tool_node = create_web_tool_node(web_rag_tool)
     app_tool_node = create_app_tool_node(app_rag_tool)
     db_tool_node = create_db_tool_node(db_rag_tool)
+    cache_tool_node = create_cache_tool_node(cache_rag_tool)
     aggregator_node = create_aggregator_node()
     summarizer_node = create_summarizer_node(llm)
     
     # Build graph
     yield "Building multi-layer graph..."
     compiled_graph = build_multi_layer_graph(
-        router_node,
+        incident_manager_node,
         web_tool_node,
         app_tool_node,
         db_tool_node,
+        cache_tool_node,
         aggregator_node,
         summarizer_node
     )
@@ -126,15 +147,17 @@ async def analyze_scenario_stream(scenario="scenario1_web_issue", query=None):
         yield f"Loaded logs: Web={len(web_log)} chars, App={len(app_log)} chars, DB={len(db_log)} chars"
     
     # Create initial state
-    analysis_query = query if query else "Analyzing system logs from web, app, and db tiers"
+    analysis_query = query if query else "Analyzing system logs from web, app, db, and cache tiers"
     initial_state: MultiLayerState = {
         "messages": [HumanMessage(content=analysis_query)],
         "web_log": web_log,
         "app_log": app_log,
         "db_log": db_log,
+        "cache_log": logs.get("cache", ""),
         "web_result": "",
         "app_result": "",
         "db_result": "",
+        "cache_result": "",
         "next": "",
         "tool_results": {}
     }
@@ -147,7 +170,7 @@ async def analyze_scenario_stream(scenario="scenario1_web_issue", query=None):
         for node_name, node_output in step.items():
             if node_name != "__end__":
                 # Yield status updates based on node
-                if node_name == "router":
+                if node_name == "incident_manager":
                     next_node = node_output.get("next", "")
                     if next_node:
                         yield f"Routing to {next_node} analysis..."
@@ -184,6 +207,7 @@ async def analyze_scenario_stream(scenario="scenario1_web_issue", query=None):
     web_result = final_result.get("web_result", "")
     app_result = final_result.get("app_result", "")
     db_result = final_result.get("db_result", "")
+    cache_result = final_result.get("cache_result", "")
     
     # Build RCA structure with complete data
     rca_data = {
@@ -194,6 +218,7 @@ async def analyze_scenario_stream(scenario="scenario1_web_issue", query=None):
         "web_result": web_result,  # Complete web tier analysis
         "app_result": app_result,  # Complete app tier analysis
         "db_result": db_result,  # Complete db tier analysis
+        "cache_result": cache_result,  # Complete cache tier analysis
     }
     
     # Add tool results as evidence (full results, not truncated)
@@ -203,6 +228,8 @@ async def analyze_scenario_stream(scenario="scenario1_web_issue", query=None):
         rca_data["evidence"].append(f"App tier: {app_result}")
     if db_result:
         rca_data["evidence"].append(f"DB tier: {db_result}")
+    if cache_result:
+        rca_data["evidence"].append(f"Cache tier: {cache_result}")
     
     # Yield final result with complete output
     yield {
@@ -223,21 +250,24 @@ def analyze_scenario(scenario="scenario1_web_issue", query=None):
     web_rag_tool = create_web_rag_tool()
     app_rag_tool = create_app_rag_tool()
     db_rag_tool = create_db_rag_tool()
+    cache_rag_tool = create_cache_rag_tool()
     
     # Create nodes for each layer
-    router_node = create_router_node()
+    incident_manager_node = create_incident_manager_node()
     web_tool_node = create_web_tool_node(web_rag_tool)
     app_tool_node = create_app_tool_node(app_rag_tool)
     db_tool_node = create_db_tool_node(db_rag_tool)
+    cache_tool_node = create_cache_tool_node(cache_rag_tool)
     aggregator_node = create_aggregator_node()
     summarizer_node = create_summarizer_node(llm)
     
     # Build graph
     compiled_graph = build_multi_layer_graph(
-        router_node,
+        incident_manager_node,
         web_tool_node,
         app_tool_node,
         db_tool_node,
+        cache_tool_node,
         aggregator_node,
         summarizer_node
     )
@@ -249,17 +279,20 @@ def analyze_scenario(scenario="scenario1_web_issue", query=None):
     web_log = logs.get("web", "")
     app_log = logs.get("app", "")
     db_log = logs.get("db", "")
+    cache_log = logs.get("cache", "")
     
     # Create initial state
-    analysis_query = query if query else "Analyzing system logs from web, app, and db tiers"
+    analysis_query = query if query else "Analyzing system logs from web, app, db, and cache tiers"
     initial_state: MultiLayerState = {
         "messages": [HumanMessage(content=analysis_query)],
         "web_log": web_log,
         "app_log": app_log,
         "db_log": db_log,
+        "cache_log": cache_log,
         "web_result": "",
         "app_result": "",
         "db_result": "",
+        "cache_result": "",
         "next": "",
         "tool_results": {}
     }
@@ -284,6 +317,7 @@ def analyze_scenario(scenario="scenario1_web_issue", query=None):
         "web_result": final_result.get("web_result", ""),
         "app_result": final_result.get("app_result", ""),
         "db_result": final_result.get("db_result", ""),
+        "cache_result": final_result.get("cache_result", ""),
         "final_result": final_result
     }
 
@@ -294,8 +328,8 @@ def main(scenario="scenario1_web_issue", stream=False, show_graph=False):
     print("\n" + "=" * 80)
     print("Initializing Multi-Layer LangGraph System...")
     print("=" * 80)
-    print("Layer 1: Router - Decides which tools to use")
-    print("Layer 2: Tool Nodes - web_tool, app_tool, db_tool (separate nodes)")
+    print("Layer 1: Incident Manager - Decides which tools to use")
+    print("Layer 2: Tool Nodes - web_tool, app_tool, db_tool, cache_tool (separate nodes)")
     print("Layer 3: Aggregator - Collects all tool results")
     print("Layer 4: Summarizer - Creates final summary")
     print("=" * 80)
@@ -309,20 +343,22 @@ def main(scenario="scenario1_web_issue", stream=False, show_graph=False):
     web_rag_tool = create_web_rag_tool()
     app_rag_tool = create_app_rag_tool()
     db_rag_tool = create_db_rag_tool()
+    cache_rag_tool = create_cache_rag_tool()
     print("All RAG tools created")
     
     # Create nodes for each layer
     print("\nCreating graph nodes...")
     
-    # Layer 1: Router (no LLM needed - simple routing logic)
-    router_node = create_router_node()
-    print("  Router node created")
+    # Layer 1: Incident manager (no LLM needed - simple routing logic)
+    incident_manager_node = create_incident_manager_node()
+    print("  Incident manager node created")
     
     # Layer 2: Tool nodes
     web_tool_node = create_web_tool_node(web_rag_tool)
     app_tool_node = create_app_tool_node(app_rag_tool)
     db_tool_node = create_db_tool_node(db_rag_tool)
-    print("  Tool nodes created (web, app, db)")
+    cache_tool_node = create_cache_tool_node(cache_rag_tool)
+    print("  Tool nodes created (web, app, db, cache)")
     
     # Layer 3: Aggregator
     aggregator_node = create_aggregator_node()
@@ -335,10 +371,11 @@ def main(scenario="scenario1_web_issue", stream=False, show_graph=False):
     # Build graph
     print("\nBuilding multi-layer graph...")
     compiled_graph = build_multi_layer_graph(
-        router_node,
+        incident_manager_node,
         web_tool_node,
         app_tool_node,
         db_tool_node,
+        cache_tool_node,
         aggregator_node,
         summarizer_node
     )
@@ -358,17 +395,20 @@ def main(scenario="scenario1_web_issue", stream=False, show_graph=False):
         print("Warning: No logs found.")
         return
     else:
-        print(f"Loaded logs: Web={len(web_log)} chars, App={len(app_log)} chars, DB={len(db_log)} chars")
+        cache_log = logs.get("cache", "")
+        print(f"Loaded logs: Web={len(web_log)} chars, App={len(app_log)} chars, DB={len(db_log)} chars, Cache={len(cache_log)} chars")
     
     # Create initial state with separate log files
     initial_state: MultiLayerState = {
-        "messages": [HumanMessage(content="Analyzing system logs from web, app, and db tiers")],
-        "web_log": web_log,      # web.log goes directly to web_tool
-        "app_log": app_log,      # app.log goes directly to app_tool
-        "db_log": db_log,        # db.log goes directly to db_tool
+        "messages": [HumanMessage(content="Analyzing system logs from web, app, db, and cache tiers")],
+        "web_log": web_log,
+        "app_log": app_log,
+        "db_log": db_log,
+        "cache_log": logs.get("cache", ""),
         "web_result": "",
         "app_result": "",
         "db_result": "",
+        "cache_result": "",
         "next": "",
         "tool_results": {}
     }
@@ -429,6 +469,8 @@ def main(scenario="scenario1_web_issue", stream=False, show_graph=False):
         print(final_result.get("app_result", "No results"))
         print("\nDB Tier Results:")
         print(final_result.get("db_result", "No results"))
+        print("\nCache Tier Results:")
+        print(final_result.get("cache_result", "No results"))
         
     except Exception as e:
         print(f"Error during analysis: {e}")

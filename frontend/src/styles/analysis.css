@@ -245,6 +245,60 @@
   color: var(--text-primary);
 }
 
+.rca-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.rca-summary-card {
+  background: linear-gradient(135deg, rgba(20, 24, 38, 0.8) 0%, rgba(30, 35, 50, 0.6) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.rca-summary-card h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.rca-summary-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.rca-summary-card ul,
+.rca-summary-card ol {
+  margin: 0;
+  padding-left: var(--spacing-lg);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.rca-summary-card li {
+  margin-bottom: var(--spacing-xs);
+}
+
+.rca-summary-card code {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-family: 'Fira Code', 'Menlo', monospace;
+  font-size: 12px;
+}
+
+.rca-summary-card strong {
+  color: var(--text-primary);
+}
+
 .tier-result {
   margin-bottom: var(--spacing-md);
   padding: var(--spacing-md);

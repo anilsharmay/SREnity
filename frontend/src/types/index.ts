@@ -5,6 +5,17 @@ export interface Alert {
   started: string;
   affects: string;
   description?: string;
+  scenario?: string;
+  status?: 'active' | 'resolved';
+}
+
+export interface IncidentHistoryEntry {
+  id: string;
+  occurred: string;
+  severity: Alert['severity'];
+  title: string;
+  summary: string;
+  scenario?: string;
 }
 
 export interface Service {
@@ -38,6 +49,11 @@ export interface RCAData {
   web_result?: string;  // Complete web tier analysis
   app_result?: string;  // Complete app tier analysis
   db_result?: string;  // Complete db tier analysis
+  cache_result?: string;  // Complete cache tier analysis
+  summary_sections?: Array<{
+    title: string;
+    content: string;
+  }>;
 }
 
 export interface RunbookAction {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Dashboard from './components/Dashboard';
 import AnalysisView from './components/AnalysisView';
-import { mockAlerts, mockServices } from './data/mockData';
+import { mockAlerts, mockServices, mockIncidentHistory } from './data/mockData';
 import type { Alert, Service } from './types';
 import './styles/globals.css';
 import './styles/dashboard.css';
@@ -78,6 +78,7 @@ function App() {
     <Dashboard
       alerts={mockAlerts}
       services={mockServices}
+      incidentHistory={mockIncidentHistory}
       onAnalyzeAlert={handleAnalyzeAlert}
       onAnalyzeService={handleAnalyzeService}
       onServiceDetails={handleServiceDetails}

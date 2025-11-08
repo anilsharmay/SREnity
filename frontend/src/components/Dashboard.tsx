@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import type { Alert, Service } from '../types';
+import type { Alert, Service, IncidentHistoryEntry } from '../types';
 import AlertsSection from './AlertsSection';
 import ServicesTable from './ServicesTable';
 import Sidebar from './Sidebar';
+import IncidentHistorySection from './IncidentHistorySection';
 
 interface DashboardProps {
   alerts: Alert[];
   services: Service[];
+  incidentHistory?: IncidentHistoryEntry[];
   onAnalyzeAlert: (alertId: string) => void;
   onAnalyzeService: (serviceId: string) => void;
   onServiceDetails?: (serviceId: string) => void;
@@ -16,6 +18,7 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({
   alerts,
   services,
+  incidentHistory = [],
   onAnalyzeAlert,
   onAnalyzeService,
   onServiceDetails,
@@ -117,7 +120,14 @@ const Dashboard: React.FC<DashboardProps> = ({
         onViewDetails={handleAlertDetails}
       />
 
-      {alerts.length > 0 && <div className="section-divider" />}
+      {incidentHistory.length > 0 && (
+        <>
+          <div className="section-divider" />
+          <IncidentHistorySection incidents={incidentHistory} />
+        </>
+      )}
+
+      {(alerts.length > 0 || incidentHistory.length > 0) && <div className="section-divider" />}
 
       <div className="section-header">
         <span>All Services</span>
