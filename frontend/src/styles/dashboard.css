@@ -287,6 +287,105 @@
   gap: var(--spacing-xs);
 }
 
+/* Incident History Section */
+.incident-history-section {
+  margin-bottom: var(--spacing-xl);
+  animation: fadeIn var(--transition-slow) ease-out;
+}
+
+.incident-history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.incident-card {
+  background: linear-gradient(135deg, rgba(20, 24, 38, 0.75) 0%, rgba(30, 35, 50, 0.6) 100%);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-left: 4px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  transition: all var(--transition-base);
+}
+
+.incident-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.incident-card.critical {
+  border-left-color: var(--critical);
+  box-shadow: var(--shadow-sm), 0 0 0 1px rgba(220, 38, 38, 0.25);
+}
+
+.incident-card.warning {
+  border-left-color: var(--warning);
+  box-shadow: var(--shadow-sm), 0 0 0 1px rgba(234, 179, 8, 0.25);
+}
+
+.incident-card.neutral {
+  border-left-color: rgba(255, 255, 255, 0.15);
+}
+
+.incident-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.incident-severity {
+  font-weight: 700;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.06);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.incident-severity.critical {
+  color: var(--critical);
+  text-shadow: 0 0 8px rgba(220, 38, 38, 0.4);
+}
+
+.incident-severity.warning {
+  color: var(--warning);
+  text-shadow: 0 0 8px rgba(234, 179, 8, 0.4);
+}
+
+.incident-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.incident-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.incident-meta-item strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.incident-summary {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
 /* Services Table - Enhanced */
 .services-table-container {
   background: linear-gradient(135deg, rgba(26, 31, 46, 0.8) 0%, rgba(35, 41, 56, 0.6) 100%);

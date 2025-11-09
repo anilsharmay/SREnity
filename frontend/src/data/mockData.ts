@@ -1,22 +1,35 @@
-import type { Alert, Service } from '../types';
+import type { Alert, Service, IncidentHistoryEntry } from '../types';
 
 export const mockAlerts: Alert[] = [
   {
-    id: 'alert-001',
+    id: 'alert-current-web',
     severity: 'P1',
-    title: 'Database Cluster Connection Issues',
-    started: '3:15 AM',
-    affects: 'Multiple services',
-    description: 'Connection pool exhausted across database cluster'
+    title: 'Web Tier 5xx Spike',
+    started: 'Nov 8, 3:05 AM',
+    affects: 'Edge/API traffic',
+    description: 'Apache front end exceeding MaxRequestWorkers; intermittent 502/503.',
+    scenario: 'scenario1_web_issue',
+    status: 'active',
+  },
+];
+
+export const mockIncidentHistory: IncidentHistoryEntry[] = [
+  {
+    id: 'incident-app-jul',
+    occurred: 'Jul 14, 02:30 AM',
+    severity: 'P2',
+    title: 'App Tier JVM Exceptions',
+    summary: 'NullPointerException and OOM across backend-sg services.',
+    scenario: 'scenario2_app_issue',
   },
   {
-    id: 'alert-002',
-    severity: 'P2',
-    title: 'API Gateway Rate Limiting',
-    started: '2:45 AM',
-    affects: 'All API services',
-    description: 'Rate limit threshold reached, throttling requests'
-  }
+    id: 'incident-db-mar',
+    occurred: 'Mar 22, 11:10 PM',
+    severity: 'P1',
+    title: 'Database Deadlock Storm',
+    summary: 'Lock waits and pool exhaustion on whizlabs-db.',
+    scenario: 'scenario3_db_issue',
+  },
 ];
 
 // Generate mock sparkline data (simple trend)

@@ -7,6 +7,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
 import json
+import re
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
@@ -21,8 +22,87 @@ load_dotenv(dotenv_path=env_path)
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(backend_dir))
 
-from rca_service import rca_agent_analyze
+# Add notebooks directory to path to import run.py
+notebooks_dir = backend_dir / "notebooks"
+sys.path.insert(0, str(notebooks_dir))
+
+from run import analyze_scenario_stream
 from runbook_service import search_runbooks_with_metadata
+
+
+TARGET_SECTION_TITLES = {
+    "root cause analysis": "Root Cause Analysis",
+    "impact assessment": "Impact Assessment",
+    "remediation plan": "Remediation Plan",
+}
+
+
+def _extract_summary_sections(summary: str):
+    """
+    Extract only the sections whose headings match the target titles.
+    Returns both the filtered markdown and structured section content.
+    """
+    if not summary:
+        return summary, []
+
+    lines = summary.splitlines()
+    heading_pattern = re.compile(r"^#{1,6}\s*(.+)$")
+
+    sections = []
+    current_section = None
+
+    def _normalize_title(title_text: str) -> str:
+        # Remove numeric prefixes like "4." or "##"
+        normalized = re.sub(r"^\d+\.\s*", "", title_text).strip()
+        return normalized
+
+    def _match_target(title_text: str):
+        normalized = _normalize_title(title_text).lower()
+        for key, display in TARGET_SECTION_TITLES.items():
+            if key in normalized:
+                return display
+        return None
+
+    for raw_line in lines:
+        stripped = raw_line.strip()
+        if not stripped:
+            if current_section is not None:
+                current_section["content_lines"].append("")
+            continue
+
+        heading_match = heading_pattern.match(stripped)
+        if heading_match:
+            matched_title = _match_target(heading_match.group(1))
+            if matched_title:
+                current_section = {
+                    "title": matched_title,
+                    "content_lines": []
+                }
+                sections.append(current_section)
+            else:
+                current_section = None
+            continue
+
+        if current_section is not None:
+            current_section["content_lines"].append(stripped)
+
+    if not sections:
+        return summary, []
+
+    filtered_output_lines = []
+    structured_sections = []
+
+    for section in sections:
+        filtered_output_lines.append(f"### {section['title']}")
+        filtered_output_lines.extend(section["content_lines"])
+
+        structured_sections.append({
+            "title": section["title"],
+            "content": "\n".join(section["content_lines"]).strip()
+        })
+
+    filtered_summary = "\n".join(filtered_output_lines).strip()
+    return filtered_summary, structured_sections
 
 app = FastAPI(title="SREnity API", version="1.0.0")
 
@@ -56,53 +136,58 @@ async def analyze_stream(request: AnalyzeRequest):
     """
     Stream analysis updates via Server-Sent Events
     
-    Orchestrates:
-    1. RCA Agent analysis (collaborator's LangGraph agent)
-    2. Runbook RAG search (using RCA recommendations)
-    3. Structured results with action steps and source URLs
+    Directly calls run.py analyze_scenario_stream function and passes through output
     """
     async def event_generator():
         try:
-            rca_recommendations = None
-            root_cause = None
+            # Use default scenario (cache incident)
+            scenario = "scenario4_cache_issue"
             
-            # Phase 1: RCA Analysis (stream from collaborator's agent)
-            async for update in rca_agent_analyze(
-                query=request.query,
-                alert_id=request.alert_id,
-                service_id=request.service_id
-            ):
+            # Stream from run.py and pass through output directly
+            rca_data = None
+            async for update in analyze_scenario_stream(scenario=scenario, query=request.query):
                 # Yield status strings as-is
                 if isinstance(update, str):
                     yield f"data: {json.dumps({'type': 'status', 'message': update})}\n\n"
                 
-                # Capture RCA results
+                # Pass through RCA results directly from run.py with complete output
                 elif isinstance(update, dict) and update.get('type') == 'rca_complete':
+                    rca_data = update.get('rca')
+                    if rca_data:
+                        summary_text = rca_data.get('summary', '') or rca_data.get('root_cause', '')
+                        filtered_summary, structured_sections = _extract_summary_sections(summary_text)
+                        if filtered_summary:
+                            rca_data['summary'] = filtered_summary
+                            rca_data['root_cause'] = filtered_summary
+                            rca_data['summary_sections'] = structured_sections
+                            update['rca']['summary'] = filtered_summary
+                            update['rca']['root_cause'] = filtered_summary
+                            update['rca']['summary_sections'] = structured_sections
+                    # Pass through complete output from run.py (includes full summary and all results)
                     yield f"data: {json.dumps(update)}\n\n"
-                    rca_data = update.get('rca', {})
-                    rca_recommendations = rca_data.get('recommendations', [])
-                    root_cause = rca_data.get('root_cause', '')
-            
-            # Phase 2: Runbook RAG Search (only if RCA complete)
-            if rca_recommendations and root_cause:
-                yield f"data: {json.dumps({'type': 'status', 'message': 'Searching runbooks for resolution steps...'})}\n\n"
-                
-                try:
-                    runbook_results = await search_runbooks_with_metadata(
-                        rca_recommendations=rca_recommendations,
-                        root_cause=root_cause,
-                        max_results=3
-                    )
                     
-                    yield f"data: {json.dumps({
-                        'type': 'runbook_complete',
-                        'runbooks': runbook_results
-                    })}\n\n"
-                except Exception as e:
-                    yield f"data: {json.dumps({
-                        'type': 'error',
-                        'message': f'Error searching runbooks: {str(e)}'
-                    })}\n\n"
+                    # Phase 2: Runbook RAG Search
+                    if rca_data:
+                        yield f"data: {json.dumps({'type': 'status', 'message': 'Searching runbooks for resolution steps...'})}\n\n"
+                        
+                        try:
+                            # Use full summary for runbook search (not truncated root_cause)
+                            search_query = rca_data.get('summary', '') or rca_data.get('root_cause', '')
+                            runbook_results = await search_runbooks_with_metadata(
+                                rca_recommendations=rca_data.get('recommendations', []),
+                                root_cause=search_query[:1000] if search_query else '',  # Use first 1000 chars for search
+                                max_results=3
+                            )
+                            
+                            yield f"data: {json.dumps({
+                                'type': 'runbook_complete',
+                                'runbooks': runbook_results
+                            })}\n\n"
+                        except Exception as e:
+                            yield f"data: {json.dumps({
+                                'type': 'error',
+                                'message': f'Error searching runbooks: {str(e)}'
+                            })}\n\n"
             
             # Signal completion
             yield "data: [DONE]\n\n"
@@ -116,7 +201,7 @@ async def analyze_stream(request: AnalyzeRequest):
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",  # Disable buffering for nginx
+            "X-Accel-Buffering": "no",
         }
     )
 

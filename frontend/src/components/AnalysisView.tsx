@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAnalysisStream } from '../hooks/useAnalysisStream';
 import type { Alert, Service } from '../types';
 import '../styles/analysis.css';
@@ -44,6 +44,53 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
+
+  const summarySections = useMemo(() => {
+    if (!rca?.summary_sections || rca.summary_sections.length === 0) {
+      return [];
+    }
+
+    type Section = {
+      title: string;
+      paragraphs: string[];
+      bullets: string[];
+      numbered: string[];
+    };
+
+    const sections: Section[] = [];
+    const formatInline = (text: string) =>
+      text.replace(/\*\*(.+?)\*\*/g, '$1').replace(/`([^`]+)`/g, '$1');
+
+    for (const section of rca.summary_sections) {
+      const parsed: Section = {
+        title: formatInline(section.title),
+        paragraphs: [],
+        bullets: [],
+        numbered: [],
+      };
+
+      const lines = section.content.split('\n');
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line || line === '---') {
+          continue;
+        }
+
+        if (line.startsWith('- ')) {
+          parsed.bullets.push(formatInline(line.slice(2).trim()));
+        } else if (/^\d+\./.test(line)) {
+          const stepText = line.replace(/^\d+\.\s*/, '');
+          parsed.numbered.push(formatInline(stepText));
+        } else {
+          parsed.paragraphs.push(formatInline(line));
+        }
+      }
+
+      sections.push(parsed);
+    }
+
+    return sections;
+  }, [rca?.summary_sections]);
 
   // Determine progress steps
   const steps = [
@@ -97,14 +144,79 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
             <span className="status-badge complete">Complete</span>
           </div>
           <div className="card-content">
-            <div className="rca-section">
-              <h3>Root Cause Identified</h3>
-              <p className="root-cause-text">{rca.root_cause}</p>
-            </div>
+            {summarySections.length > 0 ? (
+              <div className="rca-section">
+                <h3>Root Cause Analysis Summary</h3>
+                <div className="rca-summary-grid">
+                  {summarySections.map((section, idx) => (
+                    <div key={idx} className="rca-summary-card">
+                      <h4>{section.title}</h4>
+                      {section.paragraphs.map((paragraph, pIdx) => (
+                        <p key={pIdx}>{paragraph}</p>
+                      ))}
+                      {section.bullets.length > 0 && (
+                        <ul>
+                          {section.bullets.map((item, bIdx) => (
+                            <li key={bIdx}>{item}</li>
+                          ))}
+                        </ul>
+                      )}
+                      {section.numbered.length > 0 && (
+                        <ol>
+                          {section.numbered.map((item, nIdx) => (
+                            <li key={nIdx}>{item}</li>
+                          ))}
+                        </ol>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="rca-section">
+                <h3>Root Cause Analysis Summary</h3>
+                <div className="summary-text">
+                  <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                    {rca.summary || rca.root_cause}
+                  </pre>
+                </div>
+              </div>
+            )}
+
+            {/* Tier-specific Results */}
+            {(rca.web_result || rca.app_result || rca.db_result) && (
+              <div className="rca-section">
+                <h3>Layer Analysis Results</h3>
+                {rca.web_result && (
+                  <div className="tier-result">
+                    <h4>Web Tier Analysis</h4>
+                    <p className="tier-text">{rca.web_result}</p>
+                  </div>
+                )}
+                {rca.app_result && (
+                  <div className="tier-result">
+                    <h4>App Tier Analysis</h4>
+                    <p className="tier-text">{rca.app_result}</p>
+                  </div>
+                )}
+                {rca.db_result && (
+                  <div className="tier-result">
+                    <h4>DB Tier Analysis</h4>
+                    <p className="tier-text">{rca.db_result}</p>
+                  </div>
+                )}
+                {rca.cache_result && (
+                  <div className="tier-result">
+                    <h4>Cache Tier Analysis</h4>
+                    <p className="tier-text">{rca.cache_result}</p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {rca.evidence && rca.evidence.length > 0 && (
               <div className="rca-section">
-                <h3>Evidence</h3>
+                <h3>Evidence Summary</h3>
                 <ul className="evidence-list">
                   {rca.evidence.map((item, idx) => (
                     <li key={idx}>{item}</li>
