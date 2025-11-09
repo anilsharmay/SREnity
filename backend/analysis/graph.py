@@ -239,51 +239,71 @@ def create_aggregator_node():
 
 def create_summarizer_node(llm: ChatOpenAI):
     """
-    Layer 4: Summarizer node - creates final comprehensive summary.
+    Layer 4: Summarizer node - returns markdown narrative plus structured RCA fields.
     """
+    import json
+
     prompt = ChatPromptTemplate.from_messages([
         ("system", """You are a senior observability engineer creating comprehensive incident summaries.
-        
-Create a final summary that includes:
-1. Executive Summary: High-level overview
-2. Tier Analysis: Key findings from each tier (web, app, db, cache)
-3. Cross-Tier Correlations: How issues relate across tiers
-4. Root Cause Analysis: Unified root cause
-5. Impact Assessment: Overall system impact
-6. Remediation Plan: Prioritized action items
-7. Prevention Recommendations: How to prevent similar incidents
+
+Return ONLY valid JSON with the following keys:
+- summary_markdown: markdown string containing the full summary (include sections:
+    1. Executive Summary: High-level overview
+    2. Tier Analysis: Key findings from each tier (web, app, db, cache)
+    3. Cross-Tier Correlations: How issues relate across tiers
+    4. Root Cause Analysis: Unified root cause
+    5. Impact Assessment: Overall system impact
+    6. Remediation Plan: Prioritized action items
+    7. Prevention Recommendations: How to prevent similar incidents
+  Start summary_markdown with \"# FINAL INCIDENT SUMMARY\".
+- root_cause: concise sentence for the root cause.
+- recommendations: array of actionable remediation steps (strings).
+- evidence: array of key evidence strings (may be empty).
+
+Do not include any text outside the JSON.
 
 Be concise but comprehensive. Focus on actionable insights."""),
-        ("human", "Below are the aggregated analysis results:\n\n{aggregated_results}\n\nCreate a comprehensive final summary.")
+        ("human", "Aggregated analysis results:\n\n{aggregated_results}\n\nReturn the response JSON.")
     ])
-    
+
     chain = prompt | llm | StrOutputParser()
-    
+
     def summarizer_node(state: MultiLayerState):
         """Create final summary"""
         aggregated = state.get("tool_results", {})
-        
+
         if not aggregated:
             return {
                 "messages": [AIMessage(content="No results to summarize.", name="summarizer")],
-                "next": "FINISH"
+                "rca_summary_markdown": "",
+                "rca_root_cause": "",
+                "rca_recommendations": [],
+                "rca_evidence": [],
+                "next": "FINISH",
             }
-        
-        # Format aggregated results
-        formatted = "\n\n".join([
+
+        formatted = "\n\n".join(
             f"=== {tier.upper()} TIER ===\n{result}"
             for tier, result in aggregated.items()
-        ])
-        
-        # Generate summary
-        summary = chain.invoke({"aggregated_results": formatted})
+        )
+
+        raw_output = chain.invoke({"aggregated_results": formatted})
+        parsed = json.loads(raw_output) if isinstance(raw_output, str) else raw_output
+
+        summary_markdown = parsed.get("summary_markdown", "")
         
         return {
-            "messages": [AIMessage(content=f"# FINAL INCIDENT SUMMARY\n\n{summary}", name="summarizer")],
-            "next": "FINISH"
+            "messages": [AIMessage(content=summary_markdown, name="summarizer")],
+            "rca_summary_markdown": summary_markdown,
+            "rca_root_cause": parsed.get("root_cause", ""),
+            "rca_recommendations": parsed.get("recommendations", []),
+            "rca_evidence": parsed.get("evidence", []),
+            "next": "FINISH",
         }
-    
+
     return summarizer_node
+
+
 
 
 def build_multi_layer_graph(

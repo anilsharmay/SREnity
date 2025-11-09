@@ -10,8 +10,16 @@ import os
 import sys
 import argparse
 from pathlib import Path
+from dotenv import load_dotenv
 
-# Set OpenAI API key if not already set
+# Load environment variables from project root .env if available
+_SCRIPT_PATH = Path(__file__).resolve()
+_NOTEBOOKS_DIR = _SCRIPT_PATH.parent
+_BACKEND_DIR = _NOTEBOOKS_DIR.parent
+_PROJECT_ROOT = _BACKEND_DIR.parent
+load_dotenv(_PROJECT_ROOT / ".env")
+
+# Set OpenAI API key if not already set (fallback to interactive prompt)
 if "OPENAI_API_KEY" not in os.environ:
     import getpass
     os.environ["OPENAI_API_KEY"] = getpass.getpass("OpenAI API Key: ")
@@ -210,15 +218,20 @@ async def analyze_scenario_stream(scenario="scenario1_web_issue", query=None):
     cache_result = final_result.get("cache_result", "")
     
     # Build RCA structure with complete data
+    rca_summary_markdown = final_result.get("rca_summary_markdown", summary)
+    rca_root_cause = final_result.get("rca_root_cause", summary or "Analysis completed")
+    rca_recommendations = final_result.get("rca_recommendations", [])
+    rca_evidence = final_result.get("rca_evidence", [])
+
     rca_data = {
-        "root_cause": summary if summary else "Analysis completed",
-        "summary": summary,  # Full summary
-        "evidence": [],
-        "recommendations": [],
-        "web_result": web_result,  # Complete web tier analysis
-        "app_result": app_result,  # Complete app tier analysis
-        "db_result": db_result,  # Complete db tier analysis
-        "cache_result": cache_result,  # Complete cache tier analysis
+        "root_cause": rca_root_cause,
+        "summary": rca_summary_markdown,
+        "evidence": rca_evidence,
+        "recommendations": rca_recommendations,
+        "web_result": web_result,
+        "app_result": app_result,
+        "db_result": db_result,
+        "cache_result": cache_result,
     }
     
     # Add tool results as evidence (full results, not truncated)
