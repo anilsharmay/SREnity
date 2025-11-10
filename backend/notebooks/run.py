@@ -49,9 +49,11 @@ from backend.analysis.graph import (
     create_cache_tool_node,
     create_aggregator_node,
     create_summarizer_node,
+    create_runbook_node,
     build_multi_layer_graph,
     MultiLayerState
 )
+from backend.runbook_service import search_runbooks_with_metadata
 
 
 def load_logs(scenario="scenario1_web_issue"):
@@ -127,6 +129,7 @@ async def analyze_scenario_stream(scenario="scenario1_web_issue", query=None):
     cache_tool_node = create_cache_tool_node(cache_rag_tool)
     aggregator_node = create_aggregator_node()
     summarizer_node = create_summarizer_node(llm)
+    runbook_node = create_runbook_node(search_runbooks_with_metadata)
     
     # Build graph
     yield "Building multi-layer graph..."
@@ -137,7 +140,8 @@ async def analyze_scenario_stream(scenario="scenario1_web_issue", query=None):
         db_tool_node,
         cache_tool_node,
         aggregator_node,
-        summarizer_node
+        summarizer_node,
+        runbook_node
     )
     
     # Load logs
@@ -167,13 +171,19 @@ async def analyze_scenario_stream(scenario="scenario1_web_issue", query=None):
         "db_result": "",
         "cache_result": "",
         "next": "",
-        "tool_results": {}
+        "tool_results": {},
+        "rca_summary_markdown": "",
+        "rca_root_cause": "",
+        "rca_recommendations": [],
+        "rca_evidence": [],
+        "runbook_results": [],
     }
     
     yield "Running multi-layer analysis..."
     
     # Stream graph execution
-    final_result = None
+    summary_result = None
+    runbook_result = None
     async for step in compiled_graph.astream(initial_state, {"recursion_limit": 20}):
         for node_name, node_output in step.items():
             if node_name != "__end__":
@@ -192,17 +202,32 @@ async def analyze_scenario_stream(scenario="scenario1_web_issue", query=None):
                     yield "Aggregating analysis results..."
                 elif node_name == "summarizer":
                     yield "Generating root cause analysis summary..."
-                    final_result = node_output
+                    summary_result = node_output
+                elif node_name == "runbook":
+                    yield "Searching runbooks for remediation guidance..."
+                    runbook_result = node_output
     
     # If we didn't get final result from stream, invoke once more
-    if final_result is None:
+    final_state = runbook_result or summary_result
+    if summary_result is None or runbook_result is None:
         yield "Finalizing analysis..."
-        final_result = await compiled_graph.ainvoke(initial_state, {"recursion_limit": 20})
-    
+        final_state = await compiled_graph.ainvoke(initial_state, {"recursion_limit": 20})
+        if summary_result is None:
+            summary_result = final_state
+        if runbook_result is None:
+            runbook_result = final_state
+    else:
+        final_state = {}
+        if summary_result:
+            final_state.update(summary_result)
+        if runbook_result:
+            final_state.update(runbook_result)
+ 
     # Extract summary
     summary = ""
-    if "messages" in final_result:
-        for msg in final_result["messages"]:
+    summary_source = final_state
+    if summary_source and "messages" in summary_source:
+        for msg in summary_source["messages"]:
             if hasattr(msg, "name") and msg.name == "summarizer":
                 if hasattr(msg, "content"):
                     summary = str(msg.content)
@@ -210,18 +235,18 @@ async def analyze_scenario_stream(scenario="scenario1_web_issue", query=None):
             elif hasattr(msg, "content") and "FINAL INCIDENT SUMMARY" in str(msg.content):
                 summary = str(msg.content)
                 break
-    
+ 
     # Extract RCA data in format expected by frontend
-    web_result = final_result.get("web_result", "")
-    app_result = final_result.get("app_result", "")
-    db_result = final_result.get("db_result", "")
-    cache_result = final_result.get("cache_result", "")
-    
+    web_result = final_state.get("web_result", "") if final_state else ""
+    app_result = final_state.get("app_result", "") if final_state else ""
+    db_result = final_state.get("db_result", "") if final_state else ""
+    cache_result = final_state.get("cache_result", "") if final_state else ""
+ 
     # Build RCA structure with complete data
-    rca_summary_markdown = final_result.get("rca_summary_markdown", summary)
-    rca_root_cause = final_result.get("rca_root_cause", summary or "Analysis completed")
-    rca_recommendations = final_result.get("rca_recommendations", [])
-    rca_evidence = final_result.get("rca_evidence", [])
+    rca_summary_markdown = final_state.get("rca_summary_markdown", summary) if final_state else summary
+    rca_root_cause = final_state.get("rca_root_cause", summary or "Analysis completed") if final_state else (summary or "Analysis completed")
+    rca_recommendations = final_state.get("rca_recommendations", []) if final_state else []
+    rca_evidence = final_state.get("rca_evidence", []) if final_state else []
 
     rca_data = {
         "root_cause": rca_root_cause,
@@ -249,6 +274,13 @@ async def analyze_scenario_stream(scenario="scenario1_web_issue", query=None):
         "type": "rca_complete",
         "rca": rca_data
     }
+
+    runbook_results = final_state.get("runbook_results", []) if final_state else []
+    if runbook_results:
+        yield {
+            "type": "runbook_complete",
+            "runbooks": runbook_results,
+        }
 
 
 def analyze_scenario(scenario="scenario1_web_issue", query=None):
@@ -307,7 +339,12 @@ def analyze_scenario(scenario="scenario1_web_issue", query=None):
         "db_result": "",
         "cache_result": "",
         "next": "",
-        "tool_results": {}
+        "tool_results": {},
+        "rca_summary_markdown": "",
+        "rca_root_cause": "",
+        "rca_recommendations": [],
+        "rca_evidence": [],
+        "runbook_results": [],
     }
     
     # Run the graph
@@ -331,6 +368,7 @@ def analyze_scenario(scenario="scenario1_web_issue", query=None):
         "app_result": final_result.get("app_result", ""),
         "db_result": final_result.get("db_result", ""),
         "cache_result": final_result.get("cache_result", ""),
+        "runbook_results": final_result.get("runbook_results", []),
         "final_result": final_result
     }
 
@@ -380,7 +418,9 @@ def main(scenario="scenario1_web_issue", stream=False, show_graph=False):
     # Layer 4: Summarizer
     summarizer_node = create_summarizer_node(llm)
     print("  Summarizer node created")
-    
+    runbook_node = create_runbook_node(search_runbooks_with_metadata)
+    print("  Runbook node created")
+ 
     # Build graph
     print("\nBuilding multi-layer graph...")
     compiled_graph = build_multi_layer_graph(
@@ -390,7 +430,8 @@ def main(scenario="scenario1_web_issue", stream=False, show_graph=False):
         db_tool_node,
         cache_tool_node,
         aggregator_node,
-        summarizer_node
+        summarizer_node,
+        runbook_node
     )
     print("Graph built successfully")
     
@@ -423,7 +464,12 @@ def main(scenario="scenario1_web_issue", stream=False, show_graph=False):
         "db_result": "",
         "cache_result": "",
         "next": "",
-        "tool_results": {}
+        "tool_results": {},
+        "rca_summary_markdown": "",
+        "rca_root_cause": "",
+        "rca_recommendations": [],
+        "rca_evidence": [],
+        "runbook_results": [],
     }
     
     print("Initial state created with separate log files")

@@ -14,7 +14,7 @@ Architecture:
 - Layer 3: Aggregator - Collects results from all tools
 - Layer 4: Summarizer - Creates final summary
 """
-from typing import Annotated, List
+from typing import Annotated, List, Dict, Any
 import operator
 from typing_extensions import TypedDict
 from langchain_core.messages import BaseMessage, AIMessage
@@ -37,6 +37,11 @@ class MultiLayerState(TypedDict):
     cache_result: str
     next: str  # Incident manager decision: "web_tool", "app_tool", "db_tool", "cache_tool", "aggregate"
     tool_results: dict  # Store all tool results
+    rca_summary_markdown: str
+    rca_root_cause: str
+    rca_recommendations: List[str]
+    rca_evidence: List[str]
+    runbook_results: List[Dict[str, Any]]
 
 
 def create_incident_manager_node():
@@ -298,10 +303,60 @@ Be concise but comprehensive. Focus on actionable insights."""),
             "rca_root_cause": parsed.get("root_cause", ""),
             "rca_recommendations": parsed.get("recommendations", []),
             "rca_evidence": parsed.get("evidence", []),
-            "next": "FINISH",
+            "next": "runbook",
         }
 
     return summarizer_node
+
+
+
+
+def create_runbook_node(runbook_search_fn):
+    """Layer 5: Runbook node – fetch remediation guidance based on RCA."""
+
+    async def runbook_node(state: MultiLayerState):
+        recommendations = state.get("rca_recommendations", []) or []
+        root_cause = state.get("rca_root_cause", "")
+        summary_markdown = state.get("rca_summary_markdown", "")
+
+        if not recommendations and not root_cause and not summary_markdown:
+            return {
+                "messages": [AIMessage(content="No runbook lookup needed.", name="runbook")],
+                "runbook_results": [],
+                "next": "FINISH",
+            }
+
+        try:
+            runbooks = await runbook_search_fn(
+                rca_recommendations=recommendations,
+                root_cause=root_cause or summary_markdown,
+                max_results=5,
+            )
+        except Exception as exc:  # pragma: no cover - defensive
+            return {
+                "messages": [
+                    AIMessage(content=f"Runbook lookup failed: {exc}", name="runbook")
+                ],
+                "runbook_results": [],
+                "next": "FINISH",
+            }
+
+        if runbooks:
+            details = "\n".join(
+                f"- {rb['action_title']} → {rb['source_url'] or rb['source_document']}"
+                for rb in runbooks
+            )
+            message = f"Recommended runbooks found:\n{details}"
+        else:
+            message = "No matching runbooks returned."
+
+        return {
+            "messages": [AIMessage(content=message, name="runbook")],
+            "runbook_results": runbooks,
+            "next": "FINISH",
+        }
+
+    return runbook_node
 
 
 
@@ -313,7 +368,8 @@ def build_multi_layer_graph(
     db_tool_node,
     cache_tool_node,
     aggregator_node,
-    summarizer_node
+    summarizer_node,
+    runbook_node,
 ):
     """
     Build multi-layer LangGraph with all tools as separate nodes.
@@ -345,6 +401,7 @@ def build_multi_layer_graph(
     graph.add_node("cache_tool", cache_tool_node)
     graph.add_node("aggregate", aggregator_node)
     graph.add_node("summarizer", summarizer_node)
+    graph.add_node("runbook", runbook_node)
     
     # Set entry point
     graph.set_entry_point("incident_manager")
@@ -370,9 +427,8 @@ def build_multi_layer_graph(
     
     # Aggregator goes to summarizer
     graph.add_edge("aggregate", "summarizer")
-    
-    # Summarizer goes to END
-    graph.add_edge("summarizer", END)
+    graph.add_edge("summarizer", "runbook")
+    graph.add_edge("runbook", END)
     
     return graph.compile()
 
