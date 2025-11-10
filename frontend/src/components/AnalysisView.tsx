@@ -11,7 +11,6 @@ interface AnalysisViewProps {
 }
 
 const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBack }) => {
-  const [expandedRunbook, setExpandedRunbook] = useState<number | null>(null);
   const [showStatusLog, setShowStatusLog] = useState(false);
 
   const {
@@ -242,52 +241,26 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
       {/* Runbook Actions */}
       {runbooks.length > 0 && (
         <div className="runbooks-section">
-          <h2 className="section-title">Recommended Actions (from Runbooks)</h2>
-          {runbooks.map((runbook, index) => (
-            <div key={index} className="runbook-card">
-              <div className="runbook-header">
-                <h3>{runbook.action_title}</h3>
-                {runbook.relevance_score !== undefined && (
-                  <span className="relevance-badge">
-                    {(runbook.relevance_score * 100).toFixed(0)}% relevant
-                  </span>
+          <h2 className="section-title">Recommended Runbooks</h2>
+          <div className="runbooks-list">
+            {runbooks.map((runbook, index) => (
+              <div key={index} className="runbook-item">
+                <div className="runbook-title">{runbook.action_title}</div>
+                {runbook.source_url ? (
+                  <a
+                    href={runbook.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="runbook-link"
+                  >
+                    View →
+                  </a>
+                ) : (
+                  <span className="no-link">N/A</span>
                 )}
               </div>
-              <div className="runbook-content">
-                {runbook.steps && runbook.steps.length > 0 && (
-                  <div className="runbook-steps">
-                    <button
-                      className="steps-toggle"
-                      onClick={() => setExpandedRunbook(expandedRunbook === index ? null : index)}
-                    >
-                      {expandedRunbook === index ? '▼' : '▶'} Steps ({runbook.steps.length})
-                    </button>
-                    {expandedRunbook === index && (
-                      <ol className="steps-list">
-                        {runbook.steps.map((step, stepIdx) => (
-                          <li key={stepIdx}>{step}</li>
-                        ))}
-                      </ol>
-                    )}
-                  </div>
-                )}
-                <div className="runbook-source">
-                  <span className="source-label">📄 Source:</span>
-                  <span className="source-document">{runbook.source_document}</span>
-                  {runbook.source_url && (
-                    <a
-                      href={runbook.source_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="source-link"
-                    >
-                      View full runbook →
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 

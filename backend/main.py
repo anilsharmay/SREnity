@@ -139,8 +139,8 @@ async def analyze_stream(request: AnalyzeRequest):
     """
     async def event_generator():
         try:
-            # Use default scenario (cache incident)
-            scenario = "scenario4_cache_issue"
+            # Use default scenario (web incident)
+            scenario = "scenario1_web_issue"
             
             # Stream from run.py and pass through output directly
             async for update in analyze_scenario_stream(scenario=scenario, query=request.query):

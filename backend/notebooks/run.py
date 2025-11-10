@@ -82,8 +82,10 @@ def load_logs(scenario="scenario1_web_issue"):
     for tier in ["web", "app", "db", "cache"]:
         path = logs_dir / f"{tier}.log"
         if tier == "cache" and not path.exists():
-            print("Cache log missing, inserting default Redis error sample.")
-            logs[tier] = """2024-01-17T09:00:01.950Z [ERROR] [trace_id:req-401-a1b2c3] [redis-node:cache-primary] [Redis] ERR max number of clients reached - exception while processing GET user:profile:12345
+            # Only add default cache errors for cache-specific scenarios
+            if "cache" in scenario.lower():
+                print("Cache log missing, inserting default Redis error sample.")
+                logs[tier] = """2024-01-17T09:00:01.950Z [ERROR] [trace_id:req-401-a1b2c3] [redis-node:cache-primary] [Redis] ERR max number of clients reached - exception while processing GET user:profile:12345
 2024-01-17T09:00:02.012Z [WARN]  [redis-node:cache-primary] [Redis] Connected clients: 998 / maxclients: 1000 - pool almost exhausted
 2024-01-17T09:00:02.145Z [ERROR] [trace_id:req-402-a2b3c4] [redis-node:cache-primary] [Redis] ConnectionError: ERR max number of clients reached (service: order-service)
 2024-01-17T09:00:02.214Z [WARN]  [redis-node:cache-primary] [Redis] Slow command: HGETALL cart:session:88321 took 284ms (threshold 100ms)
@@ -93,6 +95,9 @@ def load_logs(scenario="scenario1_web_issue"):
 2024-01-17T09:00:02.712Z [ERROR] [trace_id:req-405-a5b6c7] [redis-node:cache-primary] [Redis] redis.exceptions.ConnectionError: Timeout connecting to Redis - connection pool exhausted
 2024-01-17T09:00:02.895Z [ERROR] [trace_id:req-406-a6b7c8] [redis-node:cache-primary] [Redis] ERR max number of clients reached - failed command: SET session:token:99431
 2024-01-17T09:00:03.015Z [WARN]  [redis-node:cache-primary] [Redis] Recommendation: review connection pooling configuration and consider increasing maxclients or scaling cache tier"""
+            else:
+                logs[tier] = ""  # Skip cache for non-cache scenarios
+                print(f"Cache log missing for {scenario}, skipping cache tier analysis.")
         elif path.exists():
             with open(path, encoding="utf-8") as f:
                 logs[tier] = f.read()

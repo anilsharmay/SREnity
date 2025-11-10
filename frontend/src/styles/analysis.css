@@ -143,7 +143,6 @@
 
 /* Cards */
 .rca-card,
-.runbook-card,
 .error-card {
   background: linear-gradient(135deg, rgba(26, 31, 46, 0.9) 0%, rgba(35, 41, 56, 0.7) 100%);
   backdrop-filter: blur(10px);
@@ -373,104 +372,63 @@
   margin-bottom: var(--spacing-md);
 }
 
-.runbook-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-md);
+/* Runbooks List */
+.runbooks-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
 }
 
-.runbook-header h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-  flex: 1;
+/* Responsive: 1 column on smaller screens */
+@media (max-width: 768px) {
+  .runbooks-list {
+    grid-template-columns: 1fr;
+  }
 }
 
-.relevance-badge {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 600;
-  color: #60a5fa;
-}
-
-.runbook-content {
-  color: var(--text-primary);
-}
-
-.runbook-steps {
-  margin-bottom: var(--spacing-md);
-}
-
-.steps-toggle {
-  background: transparent;
+.runbook-item {
+  background: linear-gradient(135deg, rgba(26, 31, 46, 0.9) 0%, rgba(35, 41, 56, 0.7) 100%);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--border);
-  color: var(--text-primary);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
   transition: all var(--transition-base);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  margin-bottom: var(--spacing-sm);
+  box-shadow: var(--shadow-md);
 }
 
-.steps-toggle:hover {
-  background: rgba(255, 255, 255, 0.05);
+.runbook-item:hover {
+  background: rgba(42, 42, 62, 0.5);
   border-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
-.steps-list {
-  margin: var(--spacing-md) 0;
-  padding-left: var(--spacing-xl);
+.runbook-item .runbook-title {
+  font-weight: 500;
+  font-size: 15px;
   color: var(--text-primary);
-  line-height: 1.8;
-}
-
-.steps-list li {
   margin-bottom: var(--spacing-sm);
 }
 
-.runbook-source {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: var(--radius-md);
-  flex-wrap: wrap;
-}
-
-.source-label {
-  font-weight: 600;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.source-document {
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.source-link {
+.runbook-item .runbook-link {
   color: #60a5fa;
   text-decoration: none;
-  font-size: 14px;
   font-weight: 500;
-  margin-left: auto;
+  font-size: 14px;
   transition: color var(--transition-base);
+  display: inline-block;
 }
 
-.source-link:hover {
+.runbook-item .runbook-link:hover {
   color: #93c5fd;
   text-decoration: underline;
+}
+
+.runbook-item .no-link {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 14px;
 }
 
 /* Error Card */
