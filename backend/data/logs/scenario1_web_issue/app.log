@@ -1,0 +1,11 @@
+2024-01-15T14:30:01.156Z [INFO] [trace_id:req-101-w1x2y3] [request_id:req-101] [ELB:backend-sg] [AZ:us-east-1a] [EC2:i-0987654321fedcba0] [Service:user-service] Processing request - 45ms
+2024-01-15T14:30:02.189Z [INFO] [trace_id:req-102-w2x3y4] [request_id:req-102] [ELB:backend-sg] [AZ:us-east-1b] [EC2:i-0987654321fedcba1] [Service:order-service] Processing request - 52ms
+2024-01-15T14:30:03.222Z [INFO] [trace_id:req-103-w3x4y5] [request_id:req-103] [ELB:backend-sg] [AZ:us-east-1a] [EC2:i-0987654321fedcba0] [Service:product-service] Processing request - 38ms
+2024-01-15T14:30:04.255Z [INFO] [trace_id:req-104-w4x5y6] [request_id:req-104] [ELB:backend-sg] [AZ:us-east-1b] [EC2:i-0987654321fedcba1] [Service:cart-service] Processing request - 41ms
+2024-01-15T14:30:05.288Z [INFO] [trace_id:req-105-w5x6y7] [request_id:req-105] [ELB:backend-sg] [AZ:us-east-1a] [EC2:i-0987654321fedcba0] [Service:user-service] Processing request - 47ms
+2024-01-15T14:30:06.321Z [INFO] [trace_id:req-106-w6x7y8] [request_id:req-106] [ELB:backend-sg] [AZ:us-east-1b] [EC2:i-0987654321fedcba1] [Service:session-service] Processing request - 43ms
+2024-01-15T14:30:07.354Z [INFO] [trace_id:req-107-w7x8y9] [request_id:req-107] [ELB:backend-sg] [AZ:us-east-1a] [EC2:i-0987654321fedcba0] [Service:payment-service] Processing request - 39ms
+2024-01-15T14:30:08.387Z [INFO] [trace_id:req-108-w8x9y0] [request_id:req-108] [ELB:backend-sg] [AZ:us-east-1b] [EC2:i-0987654321fedcba1] [Service:notification-service] Processing request - 44ms
+2024-01-15T14:30:09.420Z [INFO] [trace_id:req-109-w9x0y1] [request_id:req-109] [ELB:backend-sg] [AZ:us-east-1a] [EC2:i-0987654321fedcba0] [Service:settings-service] Processing request - 46ms
+2024-01-15T14:30:10.453Z [INFO] [trace_id:req-110-w0x1y2] [request_id:req-110] [ELB:backend-sg] [AZ:us-east-1b] [EC2:i-0987654321fedcba1] [Service:dashboard-service] Processing request - 42ms
+

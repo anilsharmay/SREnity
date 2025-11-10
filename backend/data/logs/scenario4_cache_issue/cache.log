@@ -1,0 +1,11 @@
+2024-01-17T09:00:01.950Z [ERROR] [trace_id:req-401-a1b2c3] [redis-node:cache-primary] [Redis] ERR max number of clients reached - exception while processing GET user:profile:12345
+2024-01-17T09:00:02.012Z [WARN]  [redis-node:cache-primary] [Redis] Connected clients: 998 / maxclients: 1000 - pool almost exhausted
+2024-01-17T09:00:02.145Z [ERROR] [trace_id:req-402-a2b3c4] [redis-node:cache-primary] [Redis] ConnectionError: ERR max number of clients reached (service: order-service)
+2024-01-17T09:00:02.214Z [WARN]  [redis-node:cache-primary] [Redis] Slow command: HGETALL cart:session:88321 took 284ms (threshold 100ms)
+2024-01-17T09:00:02.318Z [ERROR] [trace_id:req-403-a3b4c5] [redis-node:cache-primary] [Redis] BLPOP queue:notifications timeout - blocking clients: 12
+2024-01-17T09:00:02.443Z [ERROR] [trace_id:req-404-a4b5c6] [redis-node:cache-primary] [Redis] Connection reset by peer - unable to allocate new client connection
+2024-01-17T09:00:02.576Z [WARN]  [redis-node:cache-primary] [Redis] INFO clients: connected_clients=1000, blocked_clients=15, tracking_clients=0
+2024-01-17T09:00:02.712Z [ERROR] [trace_id:req-405-a5b6c7] [redis-node:cache-primary] [Redis] redis.exceptions.ConnectionError: Timeout connecting to Redis - connection pool exhausted
+2024-01-17T09:00:02.895Z [ERROR] [trace_id:req-406-a6b7c8] [redis-node:cache-primary] [Redis] ERR max number of clients reached - failed command: SET session:token:99431
+2024-01-17T09:00:03.015Z [WARN]  [redis-node:cache-primary] [Redis] Recommendation: review connection pooling configuration and consider increasing maxclients or scaling cache tier
+

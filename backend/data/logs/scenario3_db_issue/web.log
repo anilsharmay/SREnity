@@ -1,0 +1,11 @@
+2024-01-15T16:00:01.123Z [INFO] [trace_id:req-301-d1e2f3] [request_id:req-301] [ELB:frontend-sg] [AZ:us-east-1a] [EC2:i-0123456789abcdef0] [Apache] GET /api/users - 200 OK - 48ms - Request successful
+2024-01-15T16:00:02.456Z [INFO] [trace_id:req-302-d2e3f4] [request_id:req-302] [ELB:frontend-sg] [AZ:us-east-1b] [EC2:i-0123456789abcdef1] [Apache] POST /api/orders - 200 OK - 51ms - Request successful
+2024-01-15T16:00:03.789Z [INFO] [trace_id:req-303-d3e4f5] [request_id:req-303] [ELB:frontend-sg] [AZ:us-east-1a] [EC2:i-0123456789abcdef0] [Apache] GET /api/products - 200 OK - 39ms - Request successful
+2024-01-15T16:00:04.012Z [INFO] [trace_id:req-304-d4e5f6] [request_id:req-304] [ELB:frontend-sg] [AZ:us-east-1b] [EC2:i-0123456789abcdef1] [Apache] PUT /api/cart - 200 OK - 44ms - Request successful
+2024-01-15T16:00:05.345Z [INFO] [trace_id:req-305-d5e6f7] [request_id:req-305] [ELB:frontend-sg] [AZ:us-east-1a] [EC2:i-0123456789abcdef0] [Apache] GET /api/profile - 200 OK - 46ms - Request successful
+2024-01-15T16:00:06.678Z [INFO] [trace_id:req-306-d6e7f8] [request_id:req-306] [ELB:frontend-sg] [AZ:us-east-1b] [EC2:i-0123456789abcdef1] [Apache] DELETE /api/sessions - 200 OK - 42ms - Request successful
+2024-01-15T16:00:07.901Z [INFO] [trace_id:req-307-d7e8f9] [request_id:req-307] [ELB:frontend-sg] [AZ:us-east-1a] [EC2:i-0123456789abcdef0] [Apache] POST /api/payments - 200 OK - 41ms - Request successful
+2024-01-15T16:00:08.234Z [INFO] [trace_id:req-308-d8e9f0] [request_id:req-308] [ELB:frontend-sg] [AZ:us-east-1b] [EC2:i-0123456789abcdef1] [Apache] GET /api/notifications - 200 OK - 43ms - Request successful
+2024-01-15T16:00:09.567Z [INFO] [trace_id:req-309-d9e0f1] [request_id:req-309] [ELB:frontend-sg] [AZ:us-east-1a] [EC2:i-0123456789abcdef0] [Apache] PUT /api/settings - 200 OK - 45ms - Request successful
+2024-01-15T16:00:10.890Z [INFO] [trace_id:req-310-d0e1f2] [request_id:req-310] [ELB:frontend-sg] [AZ:us-east-1b] [EC2:i-0123456789abcdef1] [Apache] GET /api/dashboard - 200 OK - 40ms - Request successful
+

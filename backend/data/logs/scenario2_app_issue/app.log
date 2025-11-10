@@ -1,0 +1,11 @@
+2024-01-15T15:00:01.156Z [ERROR] [trace_id:req-201-a1b2c3] [request_id:req-201] [ELB:backend-sg] [AZ:us-east-1a] [EC2:i-0987654321fedcba0] [Service:user-service] NullPointerException: User object is null in getUserProfile() - 234ms
+2024-01-15T15:00:02.189Z [ERROR] [trace_id:req-202-a2b3c4] [request_id:req-202] [ELB:backend-sg] [AZ:us-east-1b] [EC2:i-0987654321fedcba1] [Service:order-service] ServiceUnavailableException: Order processing service unavailable - 3456ms
+2024-01-15T15:00:03.222Z [ERROR] [trace_id:req-203-a3b4c5] [request_id:req-203] [ELB:backend-sg] [AZ:us-east-1a] [EC2:i-0987654321fedcba0] [Service:product-service] OutOfMemoryError: Java heap space exhausted - 1234ms
+2024-01-15T15:00:04.255Z [ERROR] [trace_id:req-204-a4b5c6] [request_id:req-204] [ELB:backend-sg] [AZ:us-east-1b] [EC2:i-0987654321fedcba1] [Service:cart-service] IllegalArgumentException: Invalid cart item data - 567ms
+2024-01-15T15:00:05.288Z [ERROR] [trace_id:req-205-a5b6c7] [request_id:req-205] [ELB:backend-sg] [AZ:us-east-1a] [EC2:i-0987654321fedcba0] [Service:user-service] SQLException: Database connection pool exhausted - 8901ms
+2024-01-15T15:00:06.321Z [ERROR] [trace_id:req-206-a6b7c8] [request_id:req-206] [ELB:backend-sg] [AZ:us-east-1b] [EC2:i-0987654321fedcba1] [Service:session-service] RuntimeException: Session manager initialization failed - 2345ms
+2024-01-15T15:00:07.354Z [ERROR] [trace_id:req-207-a7b8c9] [request_id:req-207] [ELB:backend-sg] [AZ:us-east-1a] [EC2:i-0987654321fedcba0] [Service:payment-service] ServiceUnavailableException: Payment gateway connection timeout - 6789ms
+2024-01-15T15:00:08.387Z [ERROR] [trace_id:req-208-a8b9c0] [request_id:req-208] [ELB:backend-sg] [AZ:us-east-1b] [EC2:i-0987654321fedcba1] [Service:notification-service] NullPointerException: Notification queue is null - 1234ms
+2024-01-15T15:00:09.420Z [ERROR] [trace_id:req-209-a9b0c1] [request_id:req-209] [ELB:backend-sg] [AZ:us-east-1a] [EC2:i-0987654321fedcba0] [Service:settings-service] ClassNotFoundException: Settings configuration class not found - 3456ms
+2024-01-15T15:00:10.453Z [ERROR] [trace_id:req-210-a0b1c2] [request_id:req-210] [ELB:backend-sg] [AZ:us-east-1b] [EC2:i-0987654321fedcba1] [Service:dashboard-service] OutOfMemoryError: Unable to allocate memory for dashboard data - 5678ms
+
