@@ -95,9 +95,9 @@ def create_database_components():
     documents = load_saved_documents()
     print(f"📚 Loaded {len(documents)} documents")
     
-    # Filter to Redis services only for focused responses
-    documents = filter_by_service(documents, ['redis'])
-    print(f"🔍 Filtered to {len(documents)} Redis documents")
+    ## Filter to Redis services only for focused responses
+    #documents = filter_by_service(documents, ['redis'])
+    #print(f"🔍 Filtered to {len(documents)} Redis documents")
     
     # Preprocess HTML documents to markdown
     print("🔄 Preprocessing documents...")

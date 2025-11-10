@@ -14,7 +14,7 @@ Architecture:
 - Layer 3: Aggregator - Collects results from all tools
 - Layer 4: Summarizer - Creates final summary
 """
-from typing import Annotated, List
+from typing import Annotated, List, Dict, Any
 import operator
 from typing_extensions import TypedDict
 from langchain_core.messages import BaseMessage, AIMessage
@@ -37,6 +37,11 @@ class MultiLayerState(TypedDict):
     cache_result: str
     next: str  # Incident manager decision: "web_tool", "app_tool", "db_tool", "cache_tool", "aggregate"
     tool_results: dict  # Store all tool results
+    rca_summary_markdown: str
+    rca_root_cause: str
+    rca_recommendations: List[str]
+    rca_evidence: List[str]
+    runbook_results: List[Dict[str, Any]]
 
 
 def create_incident_manager_node():
@@ -239,51 +244,121 @@ def create_aggregator_node():
 
 def create_summarizer_node(llm: ChatOpenAI):
     """
-    Layer 4: Summarizer node - creates final comprehensive summary.
+    Layer 4: Summarizer node - returns markdown narrative plus structured RCA fields.
     """
+    import json
+
     prompt = ChatPromptTemplate.from_messages([
         ("system", """You are a senior observability engineer creating comprehensive incident summaries.
-        
-Create a final summary that includes:
-1. Executive Summary: High-level overview
-2. Tier Analysis: Key findings from each tier (web, app, db, cache)
-3. Cross-Tier Correlations: How issues relate across tiers
-4. Root Cause Analysis: Unified root cause
-5. Impact Assessment: Overall system impact
-6. Remediation Plan: Prioritized action items
-7. Prevention Recommendations: How to prevent similar incidents
+
+Return ONLY valid JSON with the following keys:
+- summary_markdown: markdown string containing the full summary (include sections:
+    1. Executive Summary: High-level overview
+    2. Tier Analysis: Key findings from each tier (web, app, db, cache)
+    3. Cross-Tier Correlations: How issues relate across tiers
+    4. Root Cause Analysis: Unified root cause
+    5. Impact Assessment: Overall system impact
+    6. Remediation Plan: Prioritized action items
+    7. Prevention Recommendations: How to prevent similar incidents
+  Start summary_markdown with \"# FINAL INCIDENT SUMMARY\".
+- root_cause: concise sentence for the root cause.
+- recommendations: array of actionable remediation steps (strings).
+- evidence: array of key evidence strings (may be empty).
+
+Do not include any text outside the JSON.
 
 Be concise but comprehensive. Focus on actionable insights."""),
-        ("human", "Below are the aggregated analysis results:\n\n{aggregated_results}\n\nCreate a comprehensive final summary.")
+        ("human", "Aggregated analysis results:\n\n{aggregated_results}\n\nReturn the response JSON.")
     ])
-    
+
     chain = prompt | llm | StrOutputParser()
-    
+
     def summarizer_node(state: MultiLayerState):
         """Create final summary"""
         aggregated = state.get("tool_results", {})
-        
+
         if not aggregated:
             return {
                 "messages": [AIMessage(content="No results to summarize.", name="summarizer")],
-                "next": "FINISH"
+                "rca_summary_markdown": "",
+                "rca_root_cause": "",
+                "rca_recommendations": [],
+                "rca_evidence": [],
+                "next": "FINISH",
             }
-        
-        # Format aggregated results
-        formatted = "\n\n".join([
+
+        formatted = "\n\n".join(
             f"=== {tier.upper()} TIER ===\n{result}"
             for tier, result in aggregated.items()
-        ])
-        
-        # Generate summary
-        summary = chain.invoke({"aggregated_results": formatted})
+        )
+
+        raw_output = chain.invoke({"aggregated_results": formatted})
+        parsed = json.loads(raw_output) if isinstance(raw_output, str) else raw_output
+
+        summary_markdown = parsed.get("summary_markdown", "")
         
         return {
-            "messages": [AIMessage(content=f"# FINAL INCIDENT SUMMARY\n\n{summary}", name="summarizer")],
-            "next": "FINISH"
+            "messages": [AIMessage(content=summary_markdown, name="summarizer")],
+            "rca_summary_markdown": summary_markdown,
+            "rca_root_cause": parsed.get("root_cause", ""),
+            "rca_recommendations": parsed.get("recommendations", []),
+            "rca_evidence": parsed.get("evidence", []),
+            "next": "runbook",
         }
-    
+
     return summarizer_node
+
+
+
+
+def create_runbook_node(runbook_search_fn):
+    """Layer 5: Runbook node – fetch remediation guidance based on RCA."""
+
+    async def runbook_node(state: MultiLayerState):
+        recommendations = state.get("rca_recommendations", []) or []
+        root_cause = state.get("rca_root_cause", "")
+        summary_markdown = state.get("rca_summary_markdown", "")
+
+        if not recommendations and not root_cause and not summary_markdown:
+            return {
+                "messages": [AIMessage(content="No runbook lookup needed.", name="runbook")],
+                "runbook_results": [],
+                "next": "FINISH",
+            }
+
+        try:
+            runbooks = await runbook_search_fn(
+                rca_recommendations=recommendations,
+                root_cause=root_cause or summary_markdown,
+                max_results=5,
+            )
+        except Exception as exc:  # pragma: no cover - defensive
+            return {
+                "messages": [
+                    AIMessage(content=f"Runbook lookup failed: {exc}", name="runbook")
+                ],
+                "runbook_results": [],
+                "next": "FINISH",
+            }
+
+        if runbooks:
+            details = "\n".join(
+                f"- {rb['action_title']} → {rb['source_url'] or rb['source_document']}"
+                for rb in runbooks
+            )
+            message = f"Recommended runbooks found:\n{details}"
+        else:
+            message = "No matching runbooks returned."
+
+        return {
+            "messages": [AIMessage(content=message, name="runbook")],
+            "runbook_results": runbooks,
+            "next": "FINISH",
+        }
+
+    return runbook_node
+
+
 
 
 def build_multi_layer_graph(
@@ -293,7 +368,8 @@ def build_multi_layer_graph(
     db_tool_node,
     cache_tool_node,
     aggregator_node,
-    summarizer_node
+    summarizer_node,
+    runbook_node,
 ):
     """
     Build multi-layer LangGraph with all tools as separate nodes.
@@ -325,6 +401,7 @@ def build_multi_layer_graph(
     graph.add_node("cache_tool", cache_tool_node)
     graph.add_node("aggregate", aggregator_node)
     graph.add_node("summarizer", summarizer_node)
+    graph.add_node("runbook", runbook_node)
     
     # Set entry point
     graph.set_entry_point("incident_manager")
@@ -350,9 +427,8 @@ def build_multi_layer_graph(
     
     # Aggregator goes to summarizer
     graph.add_edge("aggregate", "summarizer")
-    
-    # Summarizer goes to END
-    graph.add_edge("summarizer", END)
+    graph.add_edge("summarizer", "runbook")
+    graph.add_edge("runbook", END)
     
     return graph.compile()
 

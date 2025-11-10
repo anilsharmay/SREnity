@@ -27,7 +27,6 @@ notebooks_dir = backend_dir / "notebooks"
 sys.path.insert(0, str(notebooks_dir))
 
 from run import analyze_scenario_stream
-from runbook_service import search_runbooks_with_metadata
 
 
 TARGET_SECTION_TITLES = {
@@ -144,51 +143,29 @@ async def analyze_stream(request: AnalyzeRequest):
             scenario = "scenario4_cache_issue"
             
             # Stream from run.py and pass through output directly
-            rca_data = None
             async for update in analyze_scenario_stream(scenario=scenario, query=request.query):
                 # Yield status strings as-is
                 if isinstance(update, str):
                     yield f"data: {json.dumps({'type': 'status', 'message': update})}\n\n"
-                
+ 
                 # Pass through RCA results directly from run.py with complete output
-                elif isinstance(update, dict) and update.get('type') == 'rca_complete':
-                    rca_data = update.get('rca')
-                    if rca_data:
-                        summary_text = rca_data.get('summary', '') or rca_data.get('root_cause', '')
-                        filtered_summary, structured_sections = _extract_summary_sections(summary_text)
-                        if filtered_summary:
-                            rca_data['summary'] = filtered_summary
-                            rca_data['root_cause'] = filtered_summary
-                            rca_data['summary_sections'] = structured_sections
-                            update['rca']['summary'] = filtered_summary
-                            update['rca']['root_cause'] = filtered_summary
-                            update['rca']['summary_sections'] = structured_sections
-                    # Pass through complete output from run.py (includes full summary and all results)
-                    yield f"data: {json.dumps(update)}\n\n"
-                    
-                    # Phase 2: Runbook RAG Search
-                    if rca_data:
-                        yield f"data: {json.dumps({'type': 'status', 'message': 'Searching runbooks for resolution steps...'})}\n\n"
-                        
-                        try:
-                            # Use full summary for runbook search (not truncated root_cause)
-                            search_query = rca_data.get('summary', '') or rca_data.get('root_cause', '')
-                            runbook_results = await search_runbooks_with_metadata(
-                                rca_recommendations=rca_data.get('recommendations', []),
-                                root_cause=search_query[:1000] if search_query else '',  # Use first 1000 chars for search
-                                max_results=3
-                            )
-                            
-                            yield f"data: {json.dumps({
-                                'type': 'runbook_complete',
-                                'runbooks': runbook_results
-                            })}\n\n"
-                        except Exception as e:
-                            yield f"data: {json.dumps({
-                                'type': 'error',
-                                'message': f'Error searching runbooks: {str(e)}'
-                            })}\n\n"
-            
+                elif isinstance(update, dict):
+                    if update.get('type') == 'rca_complete':
+                        rca_data = update.get('rca')
+                        if rca_data:
+                            summary_text = rca_data.get('summary', '') or rca_data.get('root_cause', '')
+                            filtered_summary, structured_sections = _extract_summary_sections(summary_text)
+                            if filtered_summary:
+                                rca_data['summary'] = filtered_summary
+                                rca_data['root_cause'] = filtered_summary
+                                rca_data['summary_sections'] = structured_sections
+                                update['rca']['summary'] = filtered_summary
+                                update['rca']['root_cause'] = filtered_summary
+                                update['rca']['summary_sections'] = structured_sections
+                        yield f"data: {json.dumps(update)}\n\n"
+                    else:
+                        yield f"data: {json.dumps(update)}\n\n"
+ 
             # Signal completion
             yield "data: [DONE]\n\n"
             

@@ -4,8 +4,12 @@ Configuration management for SREnity
 import os
 from typing import Optional
 from dataclasses import dataclass
+from pathlib import Path
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_QDRANT_PATH = str((PROJECT_ROOT / "qdrant_db").resolve())
 
 @dataclass
 class Config:
@@ -18,7 +22,7 @@ class Config:
     evaluation_llm: str = "gpt-4o-mini"  # Judge (slightly better performance)
     
     # Qdrant Configuration (for vector storage)
-    qdrant_url: str = "../qdrant_db"
+    qdrant_url: str = DEFAULT_QDRANT_PATH
     qdrant_collection_name: str = "srenity_runbooks"
     
     # External APIs for enhanced retrieval
