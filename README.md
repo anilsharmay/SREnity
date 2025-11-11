@@ -121,13 +121,15 @@ SREnity/
 │   │   ├── graph.py      # Multi-layer analysis graph
 │   │   └── tools/        # RAG tools for each tier
 │   ├── runbook_service.py # Runbook retrieval service
+│   ├── notebooks/        # Backend analysis notebooks
+│   │   ├── run.py        # Multi-layer analysis script
+│   │   └── graph_structure.mmd # LangGraph structure diagram
 │   └── data/
 │       ├── logs/         # Log scenarios for testing
 │       └── knowledge_base/ # Incident patterns and runbooks
-├── src/                   # Shared Python utilities
-│   ├── rag/              # RAG pipeline components
-│   └── utils/            # Configuration and database utilities
-└── notebooks/            # Development and evaluation notebooks
+└── src/                   # Shared Python utilities
+    ├── rag/              # RAG pipeline components
+    └── utils/            # Configuration and database utilities
 ```
 
 ## 🔍 How It Works
