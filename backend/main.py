@@ -28,6 +28,22 @@ sys.path.insert(0, str(notebooks_dir))
 
 from run import analyze_scenario_stream
 
+# Scenario rotation counter
+_scenario_counter = 0
+SCENARIOS = [
+    "scenario1_web_issue",
+    "scenario2_app_issue",
+    "scenario3_db_issue",
+    "scenario4_cache_issue"
+]
+
+def get_next_scenario():
+    """Get next scenario in rotation (1-4)"""
+    global _scenario_counter
+    scenario = SCENARIOS[_scenario_counter % len(SCENARIOS)]
+    _scenario_counter += 1
+    return scenario
+
 
 TARGET_SECTION_TITLES = {
     "root cause analysis": "Root Cause Analysis",
@@ -210,8 +226,8 @@ async def analyze_stream(request: AnalyzeRequest):
     """
     async def event_generator():
         try:
-            # Use default scenario (cache incident)
-            scenario = "scenario4_cache_issue"
+            # Rotate through scenarios 1-4
+            scenario = get_next_scenario()
             
             # Stream from run.py and pass through output directly
             async for update in analyze_scenario_stream(scenario=scenario, query=request.query):
