@@ -111,6 +111,14 @@ const hasSectionContent = (section?: StructuredSection | null) =>
 
 const normalizeTitle = (title: string) => title.replace(/[:]/g, '').trim().toLowerCase();
 
+const getDisplayTitle = (title: string): string => {
+  const titleMap: Record<string, string> = {
+    'Root Cause Analysis': 'Root Cause',
+    'Impact Assessment': 'Impact',
+  };
+  return titleMap[title] || title;
+};
+
 interface AnalysisViewProps {
   alert?: Alert;
   service?: Service;
@@ -490,7 +498,6 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
             <div className="card-content">
               {rcaSummaryCards.length > 0 ? (
                 <div className="rca-section">
-                  <h3>Root Cause Analysis Summary</h3>
                   <div className="rca-summary-grid">
                     {rcaSummaryCards.map((section, idx) => {
                       const items = [
@@ -500,7 +507,7 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
                       ].map(stripInlineFormatting);
                       return (
                         <div key={idx} className="rca-summary-card">
-                          <h4>{section.title}</h4>
+                          <h4>{getDisplayTitle(section.title)}</h4>
                           <ul className="rca-summary-inline-list">
                             {items.map((item, itemIdx) => (
                               <li key={itemIdx}>{item}</li>
@@ -513,7 +520,6 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
                 </div>
               ) : (
                 <div className="rca-section">
-                  <h3>Root Cause Analysis Summary</h3>
                   <div className="summary-text">
                     <pre style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
                       {rca.summary || rca.root_cause}
