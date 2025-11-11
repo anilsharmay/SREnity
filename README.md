@@ -147,7 +147,6 @@ SREnity/
 ## 📚 Documentation
 
 - **Architecture Overview**: See `backend/notebooks/graph_structure.mmd` for LangGraph structure
-- **Certification Report**: See `certification-challenge-report.md` for detailed evaluation results
 
 ## 🛠️ Technology Stack
 
