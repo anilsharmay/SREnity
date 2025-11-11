@@ -111,35 +111,46 @@ export function useAnalysisStream({
                 return;
               }
 
+              let parsed: AnalysisUpdate | null = null;
               try {
-                const update: AnalysisUpdate = JSON.parse(data);
-
-                if (update.type === 'status' && update.message) {
-                  setState((prev) => ({
-                    ...prev,
-                    statusMessages: [...prev.statusMessages, update.message!],
-                  }));
-                } else if (update.type === 'rca_complete' && update.rca) {
-                  setState((prev) => ({
-                    ...prev,
-                    rca: update.rca,
-                  }));
-                } else if (update.type === 'runbook_complete' && update.runbooks) {
-                  setState((prev) => ({
-                    ...prev,
-                    runbooks: update.runbooks,
-                  }));
-                } else if (update.type === 'error') {
-                  const error = new Error(update.message || 'Unknown error');
-                  setState((prev) => ({
-                    ...prev,
-                    error: update.message || 'Unknown error',
-                    isStreaming: false,
-                  }));
-                  onError?.(error);
-                }
+                parsed = JSON.parse(data) as AnalysisUpdate;
               } catch (e) {
-                console.error('Error parsing SSE data:', e, 'Data:', data);
+                console.warn('Non-JSON SSE payload:', data, e);
+              }
+
+              if (!parsed) {
+                setState((prev) => ({
+                  ...prev,
+                  statusMessages: [...prev.statusMessages, data],
+                }));
+                continue;
+              }
+
+              const update = parsed;
+
+              if (update.type === 'status' && update.message) {
+                setState((prev) => ({
+                  ...prev,
+                  statusMessages: [...prev.statusMessages, update.message!],
+                }));
+              } else if (update.type === 'rca_complete' && update.rca) {
+                setState((prev) => ({
+                  ...prev,
+                  rca: update.rca,
+                }));
+              } else if (update.type === 'runbook_complete' && update.runbooks) {
+                setState((prev) => ({
+                  ...prev,
+                  runbooks: update.runbooks,
+                }));
+              } else if (update.type === 'error') {
+                const error = new Error(update.message || 'Unknown error');
+                setState((prev) => ({
+                  ...prev,
+                  error: update.message || 'Unknown error',
+                  isStreaming: false,
+                }));
+                onError?.(error);
               }
             }
           }
