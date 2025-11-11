@@ -293,7 +293,35 @@ Be concise but comprehensive. Focus on actionable insights."""),
         )
 
         raw_output = chain.invoke({"aggregated_results": formatted})
-        parsed = json.loads(raw_output) if isinstance(raw_output, str) else raw_output
+
+        # Robust JSON parsing with minimal fallback
+        parsed: Dict[str, Any] = {}
+        if isinstance(raw_output, str):
+            cleaned = raw_output.strip()
+            if cleaned.startswith("```json"):
+                cleaned = cleaned.split("```json", 1)[1].split("```", 1)[0].strip()
+            elif cleaned.startswith("```"):
+                cleaned = cleaned.split("```", 1)[1].split("```", 1)[0].strip()
+
+            try:
+                parsed = json.loads(cleaned if cleaned else "{}")
+            except (json.JSONDecodeError, ValueError):
+                print("Warning: summarizer returned non-JSON output; using fallback.")
+                parsed = {
+                    "summary_markdown": raw_output,
+                    "root_cause": "Analysis completed",
+                    "recommendations": [],
+                    "evidence": [],
+                }
+        elif isinstance(raw_output, dict):
+            parsed = raw_output
+        else:
+            parsed = {
+                "summary_markdown": str(raw_output) if raw_output else "Analysis completed",
+                "root_cause": "Analysis completed",
+                "recommendations": [],
+                "evidence": [],
+            }
 
         summary_markdown = parsed.get("summary_markdown", "")
         

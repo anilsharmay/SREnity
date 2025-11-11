@@ -1,43 +1,90 @@
-# SREnity Frontend - V0 Static UI
+# SREnity Frontend
 
-Dark mode dashboard for SREnity with Elastic APM-style services table.
+React-based dashboard for SREnity's incident analysis and monitoring interface.
+
+## Overview
+
+Modern, responsive frontend application that provides a real-time dashboard for monitoring services and alerts, with integrated SREnity analysis capabilities.
 
 ## Features
 
-- Dark mode theme
-- Alert banner section (independent of services)
-- Services table with metrics
-- Sparkline graphs for trends
-- Three-dot menu (⋮) for actions
-- Mock data (no API calls)
+- **Dashboard**: Service health monitoring with metrics and alerts
+- **Real-Time Analysis**: Streaming analysis results via Server-Sent Events (SSE)
+- **Progress Tracking**: Visual timeline showing analysis progress
+- **RCA Display**: Structured root cause analysis with evidence and recommendations
+- **Runbook Integration**: Direct links to relevant remediation procedures
+- **Dark Theme**: Modern, polished UI with gradients and animations
 
-## Development
+## Setup
 
+1. **Install dependencies**:
 ```bash
-# Install dependencies
 npm install
+```
 
-# Run dev server
+2. **Run development server**:
+```bash
 npm run dev
+```
 
-# Build for production
+3. **Build for production**:
+```bash
 npm run build
 ```
 
-## Component Structure
+## Architecture
 
-- `Dashboard.tsx` - Main dashboard container
-- `AlertsSection.tsx` - Alert banner
-- `ServicesTable.tsx` - Services table
-- `ServiceRow.tsx` - Individual service row
-- `AlertCard.tsx` - Individual alert card
-- `ThreeDotMenu.tsx` - Actions menu (⋮)
-- `Sparkline.tsx` - Trend graphs
-- `StatusBadge.tsx` - Health indicators
+### Components
 
-## Next Steps
+- **Dashboard.tsx**: Main dashboard container with services table and alerts
+- **AnalysisView.tsx**: Full-screen analysis results view with progress timeline
+- **AlertsSection.tsx**: Active alerts display
+- **ServicesTable.tsx**: Services table with metrics and status
+- **ServiceRow.tsx**: Individual service row with sparklines
+- **StatusBadge.tsx**: Health status indicators
 
-- Connect to FastAPI backend
-- Add RCA + Runbook analysis results view
-- Add service details view
-- Add alert details view
+### Hooks
+
+- **useAnalysisStream.ts**: Custom hook for managing SSE connection to backend analysis endpoint
+
+### Styling
+
+- **globals.css**: Global CSS variables and base styles
+- **dashboard.css**: Dashboard-specific styles
+- **analysis.css**: Analysis view styles
+
+## API Integration
+
+The frontend connects to the FastAPI backend at `http://localhost:8000`:
+
+- **POST /api/analyze/stream**: Streaming analysis endpoint
+- Uses Server-Sent Events (SSE) for real-time updates
+- Handles status messages, RCA results, and runbook recommendations
+
+## Key Features
+
+### Dashboard
+- Service health monitoring
+- Alert management
+- Environment filtering
+- Time window selection
+- Search functionality
+
+### Analysis View
+- Real-time progress timeline
+- Root cause analysis summary
+- Evidence and recommendations
+- Runbook links
+- Status log (collapsible)
+
+## Development
+
+The frontend is built with:
+- **React 18+**: UI framework
+- **TypeScript**: Type safety
+- **Vite**: Build tool and dev server
+- **CSS Modules**: Component styling
+
+## Environment Configuration
+
+The frontend expects the backend to be running on `http://localhost:8000`. To change this, update the API URL in `src/hooks/useAnalysisStream.ts`.
