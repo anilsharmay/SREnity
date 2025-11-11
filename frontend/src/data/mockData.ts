@@ -13,24 +13,7 @@ export const mockAlerts: Alert[] = [
   },
 ];
 
-export const mockIncidentHistory: IncidentHistoryEntry[] = [
-  {
-    id: 'incident-app-jul',
-    occurred: 'Jul 14, 02:30 AM',
-    severity: 'P2',
-    title: 'App Tier JVM Exceptions',
-    summary: 'NullPointerException and OOM across backend-sg services.',
-    scenario: 'scenario2_app_issue',
-  },
-  {
-    id: 'incident-db-mar',
-    occurred: 'Mar 22, 11:10 PM',
-    severity: 'P1',
-    title: 'Database Deadlock Storm',
-    summary: 'Lock waits and pool exhaustion on whizlabs-db.',
-    scenario: 'scenario3_db_issue',
-  },
-];
+export const mockIncidentHistory: IncidentHistoryEntry[] = [];
 
 // Generate mock sparkline data (simple trend)
 const generateSparkline = (count: number, base: number, variation: number): number[] => {

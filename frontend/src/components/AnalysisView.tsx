@@ -429,6 +429,59 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
             </div>
           )}
 
+          {deepDiveSections.length > 0 && (
+            <div className="deep-dive-card">
+              <div className="card-header">
+                <div>
+                  <h2>Incident Deep Dive</h2>
+                  <p className="card-subtitle">Detailed breakdown of the incident response timeline</p>
+                </div>
+              </div>
+              <div className="accordion-toggle">
+                <button
+                  type="button"
+                  className="accordion-trigger"
+                  onClick={() => setDeepDiveExpanded((prev) => !prev)}
+                >
+                  <span className="accordion-title">
+                    {isDeepDiveExpanded ? 'Collapse Sections' : 'Expand Sections'}
+                  </span>
+                  <span className="accordion-icon">{isDeepDiveExpanded ? '−' : '+'}</span>
+                </button>
+              </div>
+              {isDeepDiveExpanded && (
+                <div className="accordion">
+                  {deepDiveSections.map((section, index) => (
+                    <div key={`${section.title}-${index}`} className="accordion-item expanded">
+                      <div className="accordion-trigger static">
+                        <span className="accordion-title">{section.title}</span>
+                      </div>
+                      <div className="accordion-content">
+                        {section.paragraphs.map((paragraph, pIdx) => (
+                          <p key={`paragraph-${pIdx}`}>{paragraph}</p>
+                        ))}
+                        {section.bullets.length > 0 && (
+                          <ul>
+                            {section.bullets.map((item, bIdx) => (
+                              <li key={`bullet-${bIdx}`}>{item}</li>
+                            ))}
+                          </ul>
+                        )}
+                        {section.numbered.length > 0 && (
+                          <ol>
+                            {section.numbered.map((item, nIdx) => (
+                              <li key={`numbered-${nIdx}`}>{item}</li>
+                            ))}
+                          </ol>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="rca-card">
             <div className="card-header">
               <h2>Root Cause Analysis</h2>
@@ -523,57 +576,6 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
               )}
             </div>
           </div>
-
-          {deepDiveSections.length > 0 && (
-            <div className="deep-dive-card">
-              <div className="card-header">
-                <div>
-                  <h2>Incident Deep Dive</h2>
-                  <p className="card-subtitle">Detailed breakdown of the incident response timeline</p>
-                </div>
-              </div>
-              <div className="accordion-toggle">
-                <button
-                  type="button"
-                  className="accordion-trigger"
-                  onClick={() => setDeepDiveExpanded((prev) => !prev)}
-                >
-                  <span className="accordion-title">{isDeepDiveExpanded ? 'Collapse Sections' : 'Expand Sections'}</span>
-                  <span className="accordion-icon">{isDeepDiveExpanded ? '−' : '+'}</span>
-                </button>
-              </div>
-              {isDeepDiveExpanded && (
-                <div className="accordion">
-                  {deepDiveSections.map((section, index) => (
-                    <div key={`${section.title}-${index}`} className="accordion-item expanded">
-                      <div className="accordion-trigger static">
-                        <span className="accordion-title">{section.title}</span>
-                      </div>
-                      <div className="accordion-content">
-                        {section.paragraphs.map((paragraph, pIdx) => (
-                          <p key={`paragraph-${pIdx}`}>{paragraph}</p>
-                        ))}
-                        {section.bullets.length > 0 && (
-                          <ul>
-                            {section.bullets.map((item, bIdx) => (
-                              <li key={`bullet-${bIdx}`}>{item}</li>
-                            ))}
-                          </ul>
-                        )}
-                        {section.numbered.length > 0 && (
-                          <ol>
-                            {section.numbered.map((item, nIdx) => (
-                              <li key={`numbered-${nIdx}`}>{item}</li>
-                            ))}
-                          </ol>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
         </>
       )}
 

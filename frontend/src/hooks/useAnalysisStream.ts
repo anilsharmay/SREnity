@@ -101,6 +101,9 @@ export function useAnalysisStream({
           for (const line of lines) {
             if (line.startsWith('data: ')) {
               const data = line.slice(6).trim();
+              if (!data) {
+                continue;
+              }
 
               if (data === '[DONE]') {
                 setState((prev) => ({ ...prev, isStreaming: false }));
