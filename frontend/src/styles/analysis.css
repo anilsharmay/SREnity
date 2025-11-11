@@ -179,6 +179,9 @@
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .card-subtitle {
@@ -499,6 +502,9 @@
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Runbooks List */

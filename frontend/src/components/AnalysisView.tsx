@@ -2,6 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAnalysisStream } from '../hooks/useAnalysisStream';
 import type { Alert, Service } from '../types';
 import '../styles/analysis.css';
+import {
+  HiDocumentText,
+  HiCollection,
+  HiSearch,
+  HiBookOpen,
+} from 'react-icons/hi';
+import type { IconType } from 'react-icons';
 
 type StructuredSection = {
   title: string;
@@ -117,6 +124,35 @@ const getDisplayTitle = (title: string): string => {
     'Impact Assessment': 'Impact',
   };
   return titleMap[title] || title;
+};
+
+// Icon mapping for section headers
+const getHeaderIcon = (title: string): { Icon: IconType; color: string; size: number } | null => {
+  const normalized = title.toLowerCase().trim();
+  
+  if (normalized === 'executive summary') {
+    return { Icon: HiDocumentText, color: '#b8c5d6', size: 20 };
+  }
+  if (normalized === 'incident deep dive') {
+    return { Icon: HiCollection, color: '#8b5cf6', size: 20 };
+  }
+  if (normalized === 'root cause analysis') {
+    return { Icon: HiSearch, color: '#3b82f6', size: 20 };
+  }
+  if (normalized === 'recommended runbooks') {
+    return { Icon: HiBookOpen, color: '#10b981', size: 20 };
+  }
+  
+  return null;
+};
+
+// Helper component to render header icon
+const HeaderIcon: React.FC<{ title: string }> = ({ title }) => {
+  const iconConfig = getHeaderIcon(title);
+  if (!iconConfig) return null;
+  
+  const { Icon, color, size } = iconConfig;
+  return <Icon color={color} size={size} style={{ flexShrink: 0 }} />;
 };
 
 interface AnalysisViewProps {
@@ -413,7 +449,10 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
           {executiveSummarySection && (
             <div className="rca-card">
               <div className="card-header">
-                <h2>Executive Summary</h2>
+                <h2>
+                  <HeaderIcon title="Executive Summary" />
+                  Executive Summary
+                </h2>
               </div>
               <div className="card-content">
                 {executiveSummarySection.paragraphs.map((paragraph, idx) => (
@@ -441,7 +480,10 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
             <div className="deep-dive-card">
               <div className="card-header">
                 <div>
-                  <h2>Incident Deep Dive</h2>
+                  <h2>
+                    <HeaderIcon title="Incident Deep Dive" />
+                    Incident Deep Dive
+                  </h2>
                   <p className="card-subtitle">Detailed breakdown of the incident response timeline</p>
                 </div>
               </div>
@@ -492,7 +534,10 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
 
           <div className="rca-card">
             <div className="card-header">
-              <h2>Root Cause Analysis</h2>
+              <h2>
+                <HeaderIcon title="Root Cause Analysis" />
+                Root Cause Analysis
+              </h2>
               <span className="status-badge complete">Complete</span>
             </div>
             <div className="card-content">
@@ -588,7 +633,10 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
       {/* Runbook Actions */}
       {runbooks.length > 0 && (
         <div className="runbooks-section">
-          <h2 className="section-title">Recommended Runbooks</h2>
+          <h2 className="section-title">
+            <HeaderIcon title="Recommended Runbooks" />
+            Recommended Runbooks
+          </h2>
           <div className="runbooks-list">
             {runbooks.map((runbook, index) => (
               <div key={index} className="runbook-item">
