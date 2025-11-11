@@ -103,6 +103,77 @@ def _extract_summary_sections(summary: str):
     filtered_summary = "\n".join(filtered_output_lines).strip()
     return filtered_summary, structured_sections
 
+
+def _extract_tier_analysis(summary: str):
+    if not summary:
+        return []
+
+    tier_heading = re.search(r"##\s*Tier Analysis", summary, re.IGNORECASE)
+    if not tier_heading:
+        return []
+
+    section_text = summary[tier_heading.end():]
+    next_heading = re.search(r"\n##\s+", section_text)
+    if next_heading:
+        section_text = section_text[:next_heading.start()]
+
+    lines = section_text.strip().splitlines()
+    tiers = []
+    current = None
+
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        heading_match = re.match(r"^###\s*(.+)$", line)
+        if heading_match:
+            if current:
+                tiers.append(current)
+            current = {
+                "title": heading_match.group(1).strip(),
+                "status": "",
+                "severity": "",
+                "summary": "",
+                "details": [],
+            }
+            continue
+
+        if current:
+            kv_match = re.match(r"-\s*\*\*(.+?)\*\*:\s*(.+)", line)
+            if kv_match:
+                key = kv_match.group(1).strip().lower()
+                value = kv_match.group(2).strip()
+                if key == "status":
+                    current["status"] = value
+                elif key == "severity":
+                    current["severity"] = value
+                elif key == "summary":
+                    current["summary"] = value
+                else:
+                    current["details"].append(value)
+            else:
+                cleaned = line.lstrip("- ").strip()
+                if cleaned:
+                    current["details"].append(cleaned)
+
+    if current:
+        tiers.append(current)
+
+    results = []
+    for tier in tiers:
+        entry = {
+            "title": tier["title"],
+            "status": tier["status"],
+            "severity": tier["severity"],
+            "summary": tier["summary"],
+        }
+        if tier["details"]:
+            entry["details"] = tier["details"]
+        results.append(entry)
+
+    return results
+
 app = FastAPI(title="SREnity API", version="1.0.0")
 
 # CORS for React frontend
@@ -139,8 +210,8 @@ async def analyze_stream(request: AnalyzeRequest):
     """
     async def event_generator():
         try:
-            # Use default scenario (web incident)
-            scenario = "scenario1_web_issue"
+            # Use default scenario (cache incident)
+            scenario = "scenario4_cache_issue"
             
             # Stream from run.py and pass through output directly
             async for update in analyze_scenario_stream(scenario=scenario, query=request.query):
@@ -153,8 +224,12 @@ async def analyze_stream(request: AnalyzeRequest):
                     if update.get('type') == 'rca_complete':
                         rca_data = update.get('rca')
                         if rca_data:
-                            summary_text = rca_data.get('summary', '') or rca_data.get('root_cause', '')
-                            filtered_summary, structured_sections = _extract_summary_sections(summary_text)
+                            full_summary = (
+                                rca_data.get('full_summary')
+                                or rca_data.get('summary', '')
+                                or rca_data.get('root_cause', '')
+                            )
+                            filtered_summary, structured_sections = _extract_summary_sections(full_summary)
                             if filtered_summary:
                                 rca_data['summary'] = filtered_summary
                                 rca_data['root_cause'] = filtered_summary
@@ -162,6 +237,14 @@ async def analyze_stream(request: AnalyzeRequest):
                                 update['rca']['summary'] = filtered_summary
                                 update['rca']['root_cause'] = filtered_summary
                                 update['rca']['summary_sections'] = structured_sections
+                            if full_summary:
+                                rca_data['full_summary'] = full_summary
+                                update['rca']['full_summary'] = full_summary
+
+                            tier_analysis = _extract_tier_analysis(full_summary)
+                            if tier_analysis:
+                                rca_data['tier_analysis'] = tier_analysis
+                                update['rca']['tier_analysis'] = tier_analysis
                         yield f"data: {json.dumps(update)}\n\n"
                     else:
                         yield f"data: {json.dumps(update)}\n\n"

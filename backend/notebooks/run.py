@@ -9,6 +9,7 @@ Example: python run.py scenario1_web_issue
 import os
 import sys
 import argparse
+import asyncio
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -256,6 +257,7 @@ async def analyze_scenario_stream(scenario="scenario1_web_issue", query=None):
     rca_data = {
         "root_cause": rca_root_cause,
         "summary": rca_summary_markdown,
+        "full_summary": summary,
         "evidence": rca_evidence,
         "recommendations": rca_recommendations,
         "web_result": web_result,
@@ -352,8 +354,8 @@ def analyze_scenario(scenario="scenario1_web_issue", query=None):
         "runbook_results": [],
     }
     
-    # Run the graph
-    final_result = compiled_graph.invoke(initial_state, {"recursion_limit": 20})
+    # Run the graph using async invoke to support async-only nodes (e.g., runbook)
+    final_result = asyncio.run(compiled_graph.ainvoke(initial_state, {"recursion_limit": 20}))
     
     # Extract summary
     summary = ""
@@ -484,31 +486,34 @@ def main(scenario="scenario1_web_issue", stream=False, show_graph=False):
     print("=" * 80)
     
     if stream:
-        # Stream results to see each layer
-        try:
-            for step in compiled_graph.stream(initial_state, {"recursion_limit": 20}):
-                for node_name, node_output in step.items():
-                    if node_name != "__end__":
-                        print(f"\n[Layer: {node_name}]")
-                        if "messages" in node_output and node_output["messages"]:
-                            last_msg = node_output["messages"][-1]
-                            if hasattr(last_msg, "content"):
-                                content = str(last_msg.content)
-                                # Show first 300 chars
-                                preview = content[:300] + "..." if len(content) > 300 else content
-                                print(preview)
-                        if "next" in node_output:
-                            print(f"  Next: {node_output['next']}")
-                        print("-" * 80)
-        except Exception as e:
-            print(f"Error during streaming: {e}")
-            import traceback
-            traceback.print_exc()
-            return
+        # Stream results to see each layer using async stream API
+        async def _stream_graph():
+            try:
+                async for step in compiled_graph.astream(initial_state, {"recursion_limit": 20}):
+                    for node_name, node_output in step.items():
+                        if node_name != "__end__":
+                            print(f"\n[Layer: {node_name}]")
+                            if "messages" in node_output and node_output["messages"]:
+                                last_msg = node_output["messages"][-1]
+                                if hasattr(last_msg, "content"):
+                                    content = str(last_msg.content)
+                                    # Show first 300 chars
+                                    preview = content[:300] + "..." if len(content) > 300 else content
+                                    print(preview)
+                            if "next" in node_output:
+                                print(f"  Next: {node_output['next']}")
+                            print("-" * 80)
+            except Exception as e:
+                print(f"Error during streaming: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+
+        asyncio.run(_stream_graph())
     
     # Get final result
     try:
-        final_result = compiled_graph.invoke(initial_state, {"recursion_limit": 20})
+        final_result = asyncio.run(compiled_graph.ainvoke(initial_state, {"recursion_limit": 20}))
         
         print("\nAnalysis Complete!")
         print("=" * 80)

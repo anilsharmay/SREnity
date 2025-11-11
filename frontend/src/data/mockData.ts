@@ -2,13 +2,13 @@ import type { Alert, Service, IncidentHistoryEntry } from '../types';
 
 export const mockAlerts: Alert[] = [
   {
-    id: 'alert-current-web',
+    id: 'alert-current-cache',
     severity: 'P1',
-    title: 'Web Tier 5xx Spike',
-    started: 'Nov 8, 3:05 AM',
-    affects: 'Edge/API traffic',
-    description: 'Apache front end exceeding MaxRequestWorkers; intermittent 502/503.',
-    scenario: 'scenario1_web_issue',
+    title: 'Cache Tier Connection Pool Saturation',
+    started: 'Jan 17, 09:00 AM',
+    affects: 'Redis cache cluster & dependent services',
+    description: 'Redis primary hitting maxclients limit; blocked connections, slow commands, and timeouts across cache operations.',
+    scenario: 'scenario4_cache_issue',
     status: 'active',
   },
 ];
