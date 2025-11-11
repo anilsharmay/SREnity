@@ -7,7 +7,7 @@ name = "srenity"
 version = "0.1.0"
 description = "Enterprise SRE Agent for Production Incident Resolution"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.12.7,<3.13"
 license = {text = "MIT"}
 authors = [
     {name = "SREnity Team", email = "team@srenity.com"}
@@ -19,10 +19,7 @@ classifiers = [
     "Topic :: System :: Systems Administration",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 
 dependencies = [
@@ -41,6 +38,9 @@ dependencies = [
     "langsmith>=0.1.0",
     "ragas>=0.1.0",
     "rank-bm25>=0.2.2",
+    "ipykernel>=7.1.0",
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
 ]
 
 [project.optional-dependencies]

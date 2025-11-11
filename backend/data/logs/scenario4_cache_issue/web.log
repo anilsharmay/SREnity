@@ -1,0 +1,11 @@
+2024-01-17T09:00:01.101Z [INFO] [trace_id:req-401-a1b2c3] [request_id:req-401] [ELB:frontend-sg] [AZ:us-east-1a] [EC2:i-0aa1bb2cc3dd4ee5f] [Apache] GET /api/users - 200 OK - 42ms - Request successful
+2024-01-17T09:00:02.204Z [INFO] [trace_id:req-402-a2b3c4] [request_id:req-402] [ELB:frontend-sg] [AZ:us-east-1b] [EC2:i-0aa1bb2cc3dd4ee60] [Apache] POST /api/orders - 201 Created - 55ms - Request successful
+2024-01-17T09:00:03.287Z [INFO] [trace_id:req-403-a3b4c5] [request_id:req-403] [ELB:frontend-sg] [AZ:us-east-1a] [EC2:i-0aa1bb2cc3dd4ee5f] [Apache] GET /api/products - 200 OK - 38ms - Request successful
+2024-01-17T09:00:04.351Z [INFO] [trace_id:req-404-a4b5c6] [request_id:req-404] [ELB:frontend-sg] [AZ:us-east-1b] [EC2:i-0aa1bb2cc3dd4ee60] [Apache] PUT /api/cart - 200 OK - 47ms - Request successful
+2024-01-17T09:00:05.416Z [INFO] [trace_id:req-405-a5b6c7] [request_id:req-405] [ELB:frontend-sg] [AZ:us-east-1a] [EC2:i-0aa1bb2cc3dd4ee5f] [Apache] GET /api/profile - 200 OK - 39ms - Request successful
+2024-01-17T09:00:06.502Z [INFO] [trace_id:req-406-a6b7c8] [request_id:req-406] [ELB:frontend-sg] [AZ:us-east-1b] [EC2:i-0aa1bb2cc3dd4ee60] [Apache] DELETE /api/sessions - 204 No Content - 31ms - Request successful
+2024-01-17T09:00:07.589Z [INFO] [trace_id:req-407-a7b8c9] [request_id:req-407] [ELB:frontend-sg] [AZ:us-east-1a] [EC2:i-0aa1bb2cc3dd4ee5f] [Apache] POST /api/payments - 200 OK - 58ms - Request successful
+2024-01-17T09:00:08.673Z [INFO] [trace_id:req-408-a8b9c0] [request_id:req-408] [ELB:frontend-sg] [AZ:us-east-1b] [EC2:i-0aa1bb2cc3dd4ee60] [Apache] GET /api/notifications - 200 OK - 34ms - Request successful
+2024-01-17T09:00:09.741Z [INFO] [trace_id:req-409-a9b0c1] [request_id:req-409] [ELB:frontend-sg] [AZ:us-east-1a] [EC2:i-0aa1bb2cc3dd4ee5f] [Apache] PUT /api/settings - 200 OK - 52ms - Request successful
+2024-01-17T09:00:10.815Z [INFO] [trace_id:req-410-a0b1c2] [request_id:req-410] [ELB:frontend-sg] [AZ:us-east-1b] [EC2:i-0aa1bb2cc3dd4ee60] [Apache] GET /api/dashboard - 200 OK - 41ms - Request successful
+

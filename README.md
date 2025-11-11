@@ -1,145 +1,165 @@
-# SREnity - Enterprise SRE Agent
+# SREnity - Enterprise AIOps Copilot
 
 ![SREnity](SREnity.png)
 
-**SREnity** is an End-to-End Agentic AI Prototype designed to accelerate Production Incident resolution using RAG-based runbook retrieval. The broader vision encompasses a comprehensive SRE assistant covering all infrastructure components (Redis, Elasticsearch, Cloud SQL, CI/CD, etc.) with advanced retrieval techniques and agentic reasoning.
+**SREnity** is an AI-powered reliability copilot that performs real-time incident analysis across web, application, and database tiers. It correlates cross-system issues, delivers clear root cause insights with actionable resolution guidance, and intelligently retrieves relevant runbook content—accelerating recovery and reducing MTTR.
 
-**For this Certification Challenge, the implementation focuses on Redis-specific query response to demonstrate core capabilities and evaluation methodology.** This focused implementation showcases the technical architecture, advanced retrieval methods, and RAGAS evaluation framework that can be extended to the full SREnity vision.
+## 🎯 Problem
 
-## 🎯 Problem & Audience
+During high-severity incidents, SREs and engineers lose critical time analyzing logs across multiple tiers, correlating cross-system errors, and searching through fragmented runbooks, prolonging MTTR and amplifying business impact when every second counts.
 
-**Problem:** SREs waste critical time searching through runbooks during production incidents, leading to extended MTTR and increased business impact.
+**The Challenge:**
+- Logs are scattered across web, app, database, and cache tiers
+- Cross-system correlation requires manual investigation
+- Runbooks are fragmented and difficult to discover during incidents
+- Time-consuming detective work delays resolution
 
-**Target Users:** Site Reliability Engineers, DevOps teams, and incident response personnel who need rapid access to troubleshooting procedures during critical production issues.
+## 🏗️ Solution
 
-**Why It's Critical:** In high-pressure incident scenarios, every minute counts. Traditional documentation search is slow, fragmented, and often misses critical context needed for effective resolution.
+SREnity automates incident analysis by:
 
-## 🏗️ Solution Design
+1. **Multi-Tier Log Analysis**: Analyzes logs from web, application, database, and cache tiers simultaneously
+2. **Cross-System Correlation**: Identifies relationships between errors across different system layers
+3. **Root Cause Analysis**: Generates structured RCA summaries with evidence and recommendations
+4. **Intelligent Runbook Retrieval**: Automatically finds and links relevant remediation procedures
+5. **Real-Time Streaming**: Provides live updates during analysis with progress tracking
 
-**Proposed Solution:** An intelligent RAG-based system that retrieves relevant runbook procedures from GitLab's comprehensive SRE documentation, providing contextual, step-by-step guidance for incident resolution.
+## 🚀 Architecture
 
-**Technology Stack with Justifications:**
-- **LLM:** OpenAI GPT-4o-mini - Cost-effective and suitable for technical content processing
-- **Embeddings:** OpenAI text-embedding-3-large - Optimized for technical documentation understanding
-- **Vector Database:** Qdrant - High-performance vector storage with local deployment
-- **Retrieval:** Ensemble Retriever (Naive Vector + BM25 + Reranker) - Combines semantic understanding with keyword precision
-- **Orchestration:** LangChain - Modular RAG pipeline with comprehensive tool integration
-- **Agent Framework:** LangGraph - ReAct pattern for autonomous reasoning and tool selection
-- **Frontend:** Streamlit - Rapid prototyping with interactive chat interface
-- **Evaluation:** RAGAS framework - Comprehensive RAG evaluation across 6 metrics
+### Frontend
+- **React Dashboard**: Modern, responsive UI with dark theme
+- **Real-Time Updates**: Server-Sent Events (SSE) for streaming analysis results
+- **Interactive Analysis View**: Progress timeline, RCA summary, and runbook recommendations
 
-**Agentic Reasoning:** The system employs a LangGraph ReAct agent that autonomously:
-- Analyzes incident queries to determine information needs
-- Selects appropriate tools (runbook search vs web search) based on query context
-- Chains multiple tool calls when needed (e.g., retrieve procedure → get latest updates)
-- Refuses off-topic queries with clear guardrails
-- Provides step-by-step reasoning for troubleshooting decisions
+### Backend
+- **FastAPI**: RESTful API with streaming endpoints
+- **LangGraph**: Multi-step agent orchestration for incident analysis
+- **RAG Pipeline**: Knowledge-based retrieval for tier-specific analysis and runbook discovery
+- **Vector Database**: Qdrant for semantic search over incident patterns and runbooks
 
-## 📊 Data Sources
+### Analysis Flow
+1. **Incident Manager**: Routes analysis to appropriate tier tools
+2. **Tier Analysis**: Parallel analysis of web, app, database, and cache logs using RAG tools
+3. **Aggregation**: Combines findings from all tiers
+4. **RCA Generation**: Creates structured root cause analysis with evidence and recommendations
+5. **Runbook Retrieval**: Finds relevant remediation procedures based on RCA
 
-**Primary Data Source:** GitLab Runbooks (runbooks.gitlab.com)
-- **Full Corpus:** Real production SRE procedures covering Cloud SQL, Elastic, CI/CD, Redis, and infrastructure management
-- **Certification Challenge Data Scope:** Redis-focused subset (33 documents, 685 chunks) for focused evaluation
-- **Format:** Markdown runbooks with detailed troubleshooting procedures, commands, and configurations
-- **Quality:** Comprehensive, production-tested content with rich technical detail
+## 📊 Key Features
 
-**External APIs and Use Cases:**
-- **Tavily Search:** Latest updates, CVEs, version-specific issues not covered in runbooks
-- **Cohere Rerank:** Advanced relevance scoring for retrieved documents
-- **OpenAI API:** LLM reasoning, embeddings, and response generation
-
-**Chunking Strategy:** 
-- **Method:** Recursive character splitting with tiktoken encoding (1000-character chunks, 200-character overlap)
-- **Rationale:** Preserves complete procedures while ensuring manageable context windows for LLM processing
-- **Separators:** Hierarchical splitting by paragraphs, lines, and words for optimal content preservation
-
-## 🚀 End-to-End Prototype
-
-**Deployment:** Local Streamlit application accessible via localhost:8509
-**Architecture:** 
-- Document ingestion and chunking pipeline with HTML-to-Markdown preprocessing
-- Vector embedding generation and Qdrant storage
-- Ensemble retrieval system (Naive Vector + BM25 + Cohere Reranker)
-- LangGraph ReAct agent with 2-tool system (search_runbooks + search_web)
-- RAGAS evaluation framework with comprehensive metrics
-- Interactive chat interface with real-time processing
-
-**Demo Capabilities:**
-- Real-time query processing with agentic reasoning
-- Intelligent tool selection (runbook vs web search) based on query context
-- Contextual runbook retrieval with fallback to web search for latest updates
-- Step-by-step troubleshooting guidance with command examples
-- Guardrails preventing off-topic responses with clear error messages
-- Performance metrics visualization and comparison
-
-**Repository Structure:**
-- `notebooks/`: RAG evaluation and agent demonstration notebooks
-- `src/agents/`: SREAgent class with LangGraph implementation
-- `src/rag/`: Retrieval implementations (naive, BM25+reranker, ensemble)
-- `src/utils/`: Configuration, document loading, and evaluation utilities
-- `app/`: Streamlit deployment with custom styling and caching
-- `data/`: Processed runbooks and evaluation datasets
-
-## 📈 Performance Highlights
-
-**Advanced Retrieval:** Ensemble approach combining semantic and keyword-based retrieval
-**Agentic Reasoning:** LangGraph ReAct pattern for intelligent tool selection
-**Production Ready:** Comprehensive evaluation with RAGAS framework
-**Scalable Architecture:** Extensible to full GitLab runbook corpus
-
-## 🔍 Key Features
-
-**Intelligent Retrieval:** 
-- Semantic understanding with vector embeddings
-- Keyword precision with BM25 + Cohere reranking
-- Ensemble combination for optimal performance
-
-**Agentic Reasoning:**
-- LangGraph ReAct pattern for autonomous tool selection
-- Context-aware query processing
-- Multi-step reasoning for complex incidents
-
-**Production Ready:**
-- Comprehensive RAGAS evaluation
-- Redis-focused implementation with extensibility
-- Real-time processing with caching
+- **Multi-Tier Analysis**: Simultaneous analysis across web, app, database, and cache layers
+- **Structured RCA**: Root cause, evidence, and recommendations in a clear format
+- **Runbook Integration**: Automatic retrieval of relevant remediation procedures
+- **Real-Time Streaming**: Live progress updates during analysis
+- **Knowledge Base**: RAG-powered retrieval from incident patterns and runbook documentation
 
 ## 🎯 Quick Start
 
-**Prerequisites:**
+### Prerequisites
+- Python 3.12+
+- Node.js 18+
+- OpenAI API key
+
+### Installation
+
+1. **Clone the repository**
 ```bash
-# Clone repository
 git clone https://github.com/anilsharmay/SREnity.git
 cd SREnity
-
-# Install dependencies
-pip install -e .
-
-# Set up environment variables
-cp env.example .env
-# Edit .env with your API keys
 ```
 
-**Run the Agent:**
+2. **Install Python dependencies**
 ```bash
-# Start Streamlit app
-cd app
-streamlit run streamlit_app.py --server.port 8509
+pip install -e .
 ```
 
-**Demo Questions:**
-- "How do I restart Redis service without losing data?"
-- "Redis memory usage is high, what should I check?"
-- "How to configure Redis persistence for production?"
+3. **Install frontend dependencies**
+```bash
+cd frontend
+npm install
+```
+
+4. **Configure environment variables**
+```bash
+cp env.example .env
+# Edit .env and add your OPENAI_API_KEY
+```
+
+### Running the Application
+
+1. **Start the backend server**
+```bash
+cd backend
+python main.py
+```
+Backend will be available at `http://localhost:8000`
+
+2. **Start the frontend server**
+```bash
+cd frontend
+npm run dev
+```
+Frontend will be available at `http://localhost:5173`
+
+3. **Access the dashboard**
+- Open `http://localhost:5173` in your browser
+- Click "Analyze with SREnity" on any alert or service
+- View real-time analysis progress and results
+
+## 📁 Project Structure
+
+```
+SREnity/
+├── frontend/              # React frontend application
+│   ├── src/
+│   │   ├── components/    # React components (Dashboard, AnalysisView, etc.)
+│   │   ├── hooks/         # Custom React hooks (useAnalysisStream)
+│   │   └── styles/        # CSS styling
+│   └── package.json
+├── backend/               # FastAPI backend application
+│   ├── main.py           # FastAPI app and streaming endpoint
+│   ├── analysis/         # LangGraph analysis pipeline
+│   │   ├── graph.py      # Multi-layer analysis graph
+│   │   └── tools/        # RAG tools for each tier
+│   ├── runbook_service.py # Runbook retrieval service
+│   └── data/
+│       ├── logs/         # Log scenarios for testing
+│       └── knowledge_base/ # Incident patterns and runbooks
+├── src/                   # Shared Python utilities
+│   ├── rag/              # RAG pipeline components
+│   └── utils/            # Configuration and database utilities
+└── notebooks/            # Development and evaluation notebooks
+```
+
+## 🔍 How It Works
+
+1. **User triggers analysis** from the dashboard (alert or service)
+2. **Backend streams analysis** through LangGraph pipeline:
+   - Routes to appropriate tier analysis tools
+   - Analyzes logs using RAG-based knowledge retrieval
+   - Aggregates findings from all tiers
+   - Generates structured RCA
+   - Retrieves relevant runbooks
+3. **Frontend displays results** in real-time:
+   - Progress timeline
+   - RCA summary with evidence and recommendations
+   - Runbook links with actionable steps
 
 ## 📚 Documentation
 
-**Certification Report:** See `certification-challenge-report.md` for detailed evaluation results and certification deliverables.
+- **Architecture Overview**: See `backend/notebooks/graph_structure.mmd` for LangGraph structure
 
-**Development Notebooks:** 
-- `notebooks/rag_evaluation.ipynb` - RAG pipeline development and evaluation
-- `notebooks/agent_demo.ipynb` - Agent demonstration and testing
+## 🛠️ Technology Stack
+
+- **Frontend**: React, TypeScript, Vite
+- **Backend**: FastAPI, Python 3.12+
+- **AI/ML**: LangGraph, LangChain, OpenAI GPT-4o-mini
+- **Vector Database**: Qdrant
+- **Retrieval**: Ensemble retriever (vector similarity + BM25 + reranking)
+
+## 📝 License
+
+MIT License
 
 ---
 
-*SREnity - Enterprise SRE Agent for Production Incident Response*
+*SREnity - Accelerating Production Incident Resolution with AI*
