@@ -515,10 +515,7 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
                   className="accordion-trigger"
                   onClick={() => setDeepDiveExpanded((prev) => !prev)}
                 >
-                  <span className="accordion-title">
-                    {isDeepDiveExpanded ? 'Collapse Sections' : 'Expand Sections'}
-                  </span>
-                  <span className="accordion-icon">{isDeepDiveExpanded ? '−' : '+'}</span>
+                  {isDeepDiveExpanded ? '▼ Hide Details' : '▶ Show Details'}
                 </button>
               </div>
               {isDeepDiveExpanded && (
