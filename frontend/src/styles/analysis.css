@@ -204,7 +204,8 @@
 .accordion {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
 }
 
 .accordion-item {
@@ -218,6 +219,14 @@
 .accordion-item.expanded {
   border-color: rgba(59, 130, 246, 0.4);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.35);
+  border-left: 4px solid transparent; /* Default, will be overridden */
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.accordion-item.expanded:hover {
+  border-left-width: 5px; /* Slightly thicker on hover */
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.4);
 }
 
 .accordion-trigger {
@@ -266,12 +275,23 @@
 .accordion-trigger.static {
   cursor: default;
   border: none;
-  padding: var(--spacing-md) var(--spacing-lg) 0;
+  padding: var(--spacing-md) var(--spacing-lg);
   justify-content: flex-start;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .accordion-trigger.static .accordion-icon {
   display: none;
+}
+
+.accordion-trigger.static .accordion-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs);
 }
 
 .accordion-icon {
@@ -303,6 +323,32 @@
 
 .accordion-content li {
   margin-bottom: var(--spacing-xs);
+}
+
+/* Tier-specific border colors and backgrounds */
+.accordion-item[data-section="tier-analysis"] {
+  border-left-color: #3b82f6; /* Blue */
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+.accordion-item[data-section="cross-tier-correlations"] {
+  border-left-color: #8b5cf6; /* Purple */
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+.accordion-item[data-section="root-cause-analysis"] {
+  border-left-color: #ef4444; /* Red */
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+.accordion-item[data-section="impact-assessment"] {
+  border-left-color: #f59e0b; /* Orange */
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+.accordion-item[data-section="remediation-plan"] {
+  border-left-color: #10b981; /* Green */
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
 }
 
 .status-badge {

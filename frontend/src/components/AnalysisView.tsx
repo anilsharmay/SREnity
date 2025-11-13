@@ -8,6 +8,13 @@ import {
   HiSearch,
   HiBookOpen,
 } from 'react-icons/hi';
+import {
+  HiServer,
+  HiLink,
+  HiMagnifyingGlass,
+  HiExclamationTriangle,
+  HiWrenchScrewdriver,
+} from 'react-icons/hi2';
 import type { IconType } from 'react-icons';
 
 type StructuredSection = {
@@ -144,6 +151,21 @@ const getHeaderIcon = (title: string): { Icon: IconType; color: string; size: nu
   }
   
   return null;
+};
+
+// Icon mapping for deep dive section headers
+const getDeepDiveIcon = (sectionTitle: string): { Icon: IconType; color: string } | null => {
+  const normalized = sectionTitle.toLowerCase().trim();
+  
+  const iconMap: Record<string, { Icon: IconType; color: string }> = {
+    'tier analysis': { Icon: HiServer, color: '#3b82f6' }, // Blue for infrastructure
+    'cross-tier correlations': { Icon: HiLink, color: '#8b5cf6' }, // Purple for connections
+    'root cause analysis': { Icon: HiMagnifyingGlass, color: '#ef4444' }, // Red for critical
+    'impact assessment': { Icon: HiExclamationTriangle, color: '#f59e0b' }, // Orange for impact
+    'remediation plan': { Icon: HiWrenchScrewdriver, color: '#10b981' }, // Green for solutions
+  };
+  
+  return iconMap[normalized] || null;
 };
 
 // Helper component to render header icon
@@ -484,7 +506,7 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
                     <HeaderIcon title="Incident Deep Dive" />
                     Incident Deep Dive
                   </h2>
-                  <p className="card-subtitle">Detailed breakdown of the incident response timeline</p>
+                  <p className="card-subtitle">Detailed technical analysis report</p>
                 </div>
               </div>
               <div className="accordion-toggle">
@@ -501,11 +523,30 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
               </div>
               {isDeepDiveExpanded && (
                 <div className="accordion">
-                  {deepDiveSections.map((section, index) => (
-                    <div key={`${section.title}-${index}`} className="accordion-item expanded">
-                      <div className="accordion-trigger static">
-                        <span className="accordion-title">{section.title}</span>
-                      </div>
+                  {deepDiveSections.map((section, index) => {
+                    const iconConfig = getDeepDiveIcon(section.title);
+                    const sectionId = section.title.toLowerCase().replace(/\s+/g, '-');
+                    return (
+                      <div 
+                        key={`${section.title}-${index}`} 
+                        className="accordion-item expanded"
+                        data-section={sectionId}
+                      >
+                        <div className="accordion-trigger static">
+                          <span className="accordion-title">
+                            {iconConfig ? (
+                              <>
+                                {(() => {
+                                  const Icon = iconConfig.Icon;
+                                  return <Icon color={iconConfig.color} size={18} style={{ flexShrink: 0 }} />;
+                                })()}
+                                {section.title}
+                              </>
+                            ) : (
+                              section.title
+                            )}
+                          </span>
+                        </div>
                       <div className="accordion-content">
                         {section.paragraphs.map((paragraph, pIdx) => (
                           <p key={`paragraph-${pIdx}`}>{paragraph}</p>
@@ -526,7 +567,8 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
                         )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
