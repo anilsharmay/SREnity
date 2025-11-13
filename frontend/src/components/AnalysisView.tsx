@@ -400,7 +400,7 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
   // Determine progress steps
   const steps = [
     { id: 'retrieve', label: 'Retrieving Logs & Metrics', complete: statusMessages.length > 0 },
-    { id: 'analyze', label: 'Analyzing Patterns', complete: statusMessages.some(msg => msg.includes('Analyzing') || msg.includes('Pattern')) },
+    { id: 'analyze', label: 'Analyzing Patterns', complete: statusMessages.some(msg => msg.message.includes('Analyzing') || msg.message.includes('Pattern')) },
     { id: 'rca', label: 'RCA Summary', complete: !!rca },
     { id: 'runbooks', label: 'Runbook Search', complete: runbooks.length > 0 },
   ];
@@ -669,10 +669,10 @@ const AnalysisView: React.FC<AnalysisViewProps> = ({ alert, service, query, onBa
         </button>
         {showStatusLog && (
           <div className="status-log">
-            {statusMessages.map((message, index) => (
+            {statusMessages.map((entry, index) => (
               <div key={index} className="status-log-entry">
-                <span className="status-time">{new Date().toLocaleTimeString()}</span>
-                <span className="status-message">{message}</span>
+                <span className="status-time">{entry.timestamp}</span>
+                <span className="status-message">{entry.message}</span>
               </div>
             ))}
           </div>

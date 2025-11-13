@@ -13,7 +13,7 @@ interface UseAnalysisStreamOptions {
 }
 
 interface AnalysisState {
-  statusMessages: string[];
+  statusMessages: Array<{ message: string; timestamp: string }>;
   rca: RCAData | null;
   runbooks: RunbookAction[];
   isStreaming: boolean;
@@ -121,7 +121,10 @@ export function useAnalysisStream({
               if (!parsed) {
                 setState((prev) => ({
                   ...prev,
-                  statusMessages: [...prev.statusMessages, data],
+                  statusMessages: [...prev.statusMessages, { 
+                    message: data, 
+                    timestamp: new Date().toLocaleTimeString() 
+                  }],
                 }));
                 continue;
               }
@@ -131,17 +134,20 @@ export function useAnalysisStream({
               if (update.type === 'status' && update.message) {
                 setState((prev) => ({
                   ...prev,
-                  statusMessages: [...prev.statusMessages, update.message!],
+                  statusMessages: [...prev.statusMessages, { 
+                    message: update.message!, 
+                    timestamp: new Date().toLocaleTimeString() 
+                  }],
                 }));
               } else if (update.type === 'rca_complete' && update.rca) {
                 setState((prev) => ({
                   ...prev,
-                  rca: update.rca,
+                  rca: update.rca ?? null,
                 }));
               } else if (update.type === 'runbook_complete' && update.runbooks) {
                 setState((prev) => ({
                   ...prev,
-                  runbooks: update.runbooks,
+                  runbooks: update.runbooks ?? [],
                 }));
               } else if (update.type === 'error') {
                 const error = new Error(update.message || 'Unknown error');
